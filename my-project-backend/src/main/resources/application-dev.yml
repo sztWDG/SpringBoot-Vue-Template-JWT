@@ -6,18 +6,29 @@ springdoc:
 spring:
   mail:
     host: smtp.163.com
-    username: javastudy111@163.com
-    password: VKQFYZMUSUZGSGEG
+    username: 15059993560@163.com
+    password: FNgiwtjK7dcmcmxz
   rabbitmq:
-    addresses: localhost
-    username: admin
-    password: admin
+    addresses: 192.168.182.131
+    username: rabbitmq
+    password: rabbitmq
     virtual-host: /
+    port: 15672
   datasource:
-    url: jdbc:mysql://localhost:3306/test
+    url: jdbc:mysql://192.168.182.131:3306/personal_forum?useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
     username: root
-    password: 123456
+    password: mysql_yCX36r
     driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 10        # 最大连接数
+      minimum-idle: 5              # 最小空闲连接数
+      idle-timeout: 30000          # 空闲连接超时时间（毫秒）
+      connection-timeout: 30000     # 连接超时时间（毫秒）
+      max-lifetime: 1800000        # 连接最大生命周期（毫秒）
+  data:
+    redis:
+      host: 192.168.182.131
+      password: redis_dpCC8C
   security:
     jwt:
       key: 'abcdefghijklmn'
