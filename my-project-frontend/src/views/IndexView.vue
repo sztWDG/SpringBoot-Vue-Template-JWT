@@ -1,13 +1,33 @@
+<script setup>
+import {get, logout} from '@/net'
+import router from "@/router";
+import {useStore} from "@/store";
+import {ref} from "vue";
+
+const store = useStore();
+const loading = ref(true);
+
+get('/api/user/info', (data)=>{
+  store.user = data;
+  loading.value = false;
+})
+
+function userLogout() {
+  logout(() => router.push("/"))
+}
+</script>
+
+
 <template>
-  <div class="man-content">
-    <el-container style="height: 100%">
+  <div class="man-content" v-loading="loading" element-loading-text="正在进入，请稍后...">
+    <el-container style="height: 100%" v-if="!loading">
       <el-header class="man-content-header" style="display:flex;justify-content: center;align-items: center">
         <el-image class="logo" src="https://element-plus.org/images/element-plus-logo.svg" style="margin-right: auto"/>
           <div class="user-info" style="font-size: 25px;color: indigo;text-align: center;flex: 1">
 
             <div class="profile">
-              <div>用户名</div>
-              <div>电子邮件</div>
+              <div>{{store.user.username}}</div>
+              <div>{{store.user.email}}</div>
             </div>
             <el-avatar src="https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png"/>
             Annie
@@ -21,14 +41,7 @@
   </div>
 </template>
 
-<script setup>
-import { logout } from '@/net'
-import router from "@/router";
 
-function userLogout() {
-  logout(() => router.push("/"))
-}
-</script>
 
 <style scoped lang="less">
 .man-content{

@@ -7,6 +7,7 @@ import com.example.entity.BaseData;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
+import java.time.LocalDateTime;
 import java.util.Date;
 
 /**
@@ -22,5 +23,5 @@ public class Account implements BaseData {
     String password;
     String email;
     String role;
-    Date registerTime;
+    LocalDateTime registerTime;
 }
