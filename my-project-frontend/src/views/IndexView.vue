@@ -35,9 +35,9 @@ function userLogout() {
 
 
 <template>
-  <div class="man-content" v-loading="loading" element-loading-text="正在进入，请稍后...">
+  <div class="main-content" v-loading="loading" element-loading-text="正在进入，请稍后...">
     <el-container style="height: 100%" v-if="!loading">
-      <el-header class="man-content-header">
+      <el-header class="main-content-header">
         <el-image class="logo" src="https://element-plus.org/images/element-plus-logo.svg" style="margin-right: auto"/>
 
         <div style="flex: 1;padding: 0 20px;text-align: center ">
@@ -64,27 +64,32 @@ function userLogout() {
             <div>{{ store.user.username }}</div>
             <div>{{ store.user.email }}</div>
           </div>
-<!--          dropdown: 鼠标悬浮之后显示列表信息-->
+          <!--          dropdown: 鼠标悬浮之后显示列表信息-->
           <el-dropdown>
             <el-avatar src="https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png"/>
             <template #dropdown>
               <el-dropdown-item>
-                <el-icon><Operation/></el-icon>
+                <el-icon>
+                  <Operation/>
+                </el-icon>
                 个人设置
               </el-dropdown-item>
               <el-dropdown-item>
-                <el-icon><Message/></el-icon>
+                <el-icon>
+                  <Message/>
+                </el-icon>
                 消息列表
               </el-dropdown-item>
               <el-dropdown-item>
-                <el-icon><Back/></el-icon>
+                <el-icon>
+                  <Back/>
+                </el-icon>
                 退出登录
               </el-dropdown-item>
             </template>
           </el-dropdown>
           Annie
         </div>
-
       </el-header>
       <el-container>
         <el-aside width="230px">
@@ -93,8 +98,10 @@ function userLogout() {
             <!-- min-height和height的区别看不出来啊 QUESTION-->
             <!-- 100vh-55px，55px为header高度。导航菜单高度拉满，占据整个左边-->
             <!-- 默认展示子菜单中的1-1，也就是下面设置的index为1-1的校园论坛-->
+            <!-- 动态地使用当前路由作为path -->
             <el-menu
-                default-active="1-1"
+                router
+                :default-active="$route.path"
                 style="height: calc(100vh - 55px)">
               <el-sub-menu index="1">
                 <template #title>
@@ -202,7 +209,7 @@ function userLogout() {
                   </el-icon>
                   <span><b>个人设置</b></span>
                 </template>
-                <el-menu-item>
+                <el-menu-item index="/index/user-setting">
                   <template #title>
                     <el-icon>
                       <User/>
@@ -224,7 +231,17 @@ function userLogout() {
 
 
         </el-aside>
-        <el-main></el-main>
+
+        <el-main class="main-content-page" style="padding: 0">
+          <el-scrollbar style="height: calc(100vh - 55px)">
+            <!--二级路由，并设置一个淡入淡出的效果-->
+            <router-view v-slot="{ Component }">
+              <transition name="el-fade-in-linear" mode="out-in">
+                <component :is="Component" style="height: 100%"/>
+              </transition>
+            </router-view>
+          </el-scrollbar>
+        </el-main>
       </el-container>
     </el-container>
   </div>
@@ -232,12 +249,21 @@ function userLogout() {
 
 
 <style scoped lang="less">
-.man-content {
+.main-content-page {
+  padding: 0;
+  background-color: #f7f8fa;
+}
+
+.dark .main-content-page{
+  background-color: #212225;
+}
+
+.main-content {
   height: 100vh;
   width: 100vw;
 }
 
-.man-content-header {
+.main-content-header {
   border-bottom: solid 1px var(--el-border-color);
   height: 55px;
   display: flex;

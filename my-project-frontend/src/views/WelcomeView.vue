@@ -10,6 +10,7 @@
             <div style="margin-top: 5px">在这里你可以同性交友，因为都是男的，没有学Java的女生。</div>
         </div>
         <div class="right-card">
+<!--          淡入淡出-->
             <router-view v-slot="{ Component }">
                 <transition name="el-fade-in-linear" mode="out-in">
                     <component :is="Component" style="height: 100%"/>
