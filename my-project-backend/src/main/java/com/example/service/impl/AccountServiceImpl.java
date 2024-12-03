@@ -186,7 +186,7 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
     }
 
     @Override
-    public Account findAccountBuId(int id) {
+    public Account findAccountById(int id) {
         return this.query().eq("id", id).one();
     }
 
