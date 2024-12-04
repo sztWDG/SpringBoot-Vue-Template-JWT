@@ -3,7 +3,7 @@
 defineProps({
   icon: Object,
   title: String,
-  desc: String
+  description: String
 })
 
 </script>
@@ -18,7 +18,7 @@ defineProps({
           <component :is="icon"/>
         </el-icon>
         {{title}}
-        <div>{{ desc }}</div>
+        <div>{{ description }}</div>
       </div>
     </div>
     <slot/>

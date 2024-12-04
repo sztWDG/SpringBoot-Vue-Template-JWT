@@ -40,7 +40,7 @@ public class AccountController {
     @GetMapping("/details")
     public RestBean<AccountDetailsVO> details(@RequestAttribute(Const.ATTR_USER_ID) int id) {
         AccountDetails details = Optional
-                .ofNullable(detailsService.findeAccountDetailsById(id))
+                .ofNullable(detailsService.findAccountDetailsById(id))
                 //若没有，则直接new一个，避免为空的情况，导致前端报错
                 .orElseGet(AccountDetails::new);
         return RestBean.success(details.asViewObject(AccountDetailsVO.class));

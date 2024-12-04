@@ -18,5 +18,5 @@ public class AccountDetails implements BaseData {
     String phone;
     String qq;
     String wx;
-    String desc;
+    String description;
 }

@@ -9,6 +9,7 @@ import com.example.service.AccountDetailsService;
 import com.example.service.AccountService;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class AccountDetailsImpl extends ServiceImpl<AccountDetailsMapper, AccountDetails> implements AccountDetailsService {
@@ -17,11 +18,12 @@ public class AccountDetailsImpl extends ServiceImpl<AccountDetailsMapper, Accoun
     AccountService accountService;
 
     @Override
-    public AccountDetails findeAccountDetailsById(int id) {
+    public AccountDetails findAccountDetailsById(int id) {
         return this.getById(id);
     }
 
     @Override
+    @Transactional
     public synchronized boolean saveAccountDetails(int id, DetailsSaveVO vo) {
         //这里需要考虑枷锁，避免多人同时设置用户名，并且有可能设置成相同的。（但是数据库里面已经设置了uniq键，要求没那么严格）
         Account account = accountService.findAccountByNameOrEmail(vo.getUsername());
@@ -32,8 +34,9 @@ public class AccountDetailsImpl extends ServiceImpl<AccountDetailsMapper, Accoun
                     .update();
             this.saveOrUpdate(new AccountDetails(
                     id, vo.getGender(), vo.getPhone(),
-                    vo.getQq(), vo.getWx(), vo.getDesc()
+                    vo.getQq(), vo.getWx(), vo.getDescription()
             ));
+            return true;
         }
         return false;
     }

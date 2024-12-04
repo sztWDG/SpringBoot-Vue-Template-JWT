@@ -6,7 +6,7 @@ import com.example.entity.vo.request.DetailsSaveVO;
 
 public interface AccountDetailsService extends IService<AccountDetails> {
     //查找用户信息（通过id）
-    AccountDetails findeAccountDetailsById(int id);
+    AccountDetails findAccountDetailsById(int id);
     //保存信息
     boolean saveAccountDetails(int id, DetailsSaveVO vo);
 }
