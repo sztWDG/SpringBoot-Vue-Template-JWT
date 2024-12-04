@@ -3,7 +3,7 @@
 import Card from "@/components/Card.vue";
 import {Message, Notebook, Refresh, Select, User} from "@element-plus/icons-vue";
 import {useStore} from "@/store";
-import {computed, reactive, ref} from "vue";
+import {computed, onMounted, reactive, ref} from "vue";
 import {get, post} from "@/net";
 import {ElMessage} from "element-plus";
 
@@ -97,35 +97,40 @@ const onValidate = (prop, isValid) => {
 function sendEmailCode() {
 
   emailFormRef.value.validate(isValid => {
-    coldTime.value = 60;
-    get(`/api/auth/ask-code?email=${emailForm.email}&type=modify`, () => {
-      ElMessage.success(`验证码已成功发送到邮箱：${emailForm.email}，请注意查收`)
-      const handle = setInterval(() => {
-        coldTime.value--;
-        if (coldTime.value === 0) {
-          clearInterval(handle);
-        }
-      }, 1000)
-    }, () => {
-      ElMessage.warning(message);
-      coldTime.value = 0;
-    })
+    if (isValid) {
+      coldTime.value = 60;
+      get(`/api/auth/ask-code?email=${emailForm.email}&type=modify`, () => {
+        ElMessage.success(`验证码已成功发送到邮箱：${emailForm.email}，请注意查收`)
+        const handle = setInterval(() => {
+          coldTime.value--;
+          if (coldTime.value === 0) {
+            clearInterval(handle);
+          }
+        }, 1000)
+      }, () => {
+        ElMessage.warning(message);
+        coldTime.value = 0;
+      })
+    }
   })
 }
 
 function modifyEmail() {
  emailFormRef.value.validate(isValid => {
-   post('/api/user/modify-email', emailForm, () => {
-     ElMessage.success('邮件修改成功');
-     store.user.email = emailForm.email;
-     emailForm.code = ''
-   })
+  if (isValid){
+    post('/api/user/modify-email', emailForm, () => {
+      ElMessage.success('邮件修改成功');
+      store.user.email = emailForm.email;
+      emailForm.code = ''
+    })
+  }
  })
 }
 </script>
 
 <template>
-  <div style="display: flex">
+<!--  设置max-width: 950px; margin: auto以让界面元素不会因为页面的拖动拉长而显得比例过于失调-->
+  <div style="display: flex; max-width: 950px; margin: auto">
     <div class="setting-left">
       <card :icon="User" title="账号信息设置"
             description="在这里编辑您的个人信息，您可以在隐私设置中选择是否展示这些信息"

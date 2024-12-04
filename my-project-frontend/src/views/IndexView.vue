@@ -2,7 +2,7 @@
 import {get, logout} from '@/net'
 import router from "@/router";
 import {useStore} from "@/store";
-import {reactive, ref} from "vue";
+import {computed, onMounted, reactive, ref} from "vue";
 import {
   Back,
   Bell,
@@ -22,6 +22,7 @@ const searchInput = reactive({
   type: '1',
   text: ''
 })
+
 
 get('/api/user/info', (data) => {
   store.user = data;
@@ -80,7 +81,7 @@ function userLogout() {
                 </el-icon>
                 消息列表
               </el-dropdown-item>
-              <el-dropdown-item>
+              <el-dropdown-item @click="userLogout">
                 <el-icon>
                   <Back/>
                 </el-icon>
@@ -217,7 +218,7 @@ function userLogout() {
                     个人信息设置
                   </template>
                 </el-menu-item>
-                <el-menu-item>
+                <el-menu-item index="/index/privacy-setting">
                   <template #title>
                     <el-icon>
                       <Lock/>
@@ -234,11 +235,12 @@ function userLogout() {
 
         <el-main class="main-content-page" style="padding: 0">
           <el-scrollbar style="height: calc(100vh - 55px)">
-            <!--二级路由，并设置一个淡入淡出的效果-->
-            <router-view v-slot="{ Component }">
-              <transition name="el-fade-in-linear" mode="out-in">
-                <component :is="Component" style="height: 100%"/>
-              </transition>
+<!--            <router-view v-slot="{ Component }">-->
+<!--              <transition name="el-fade-in-linear" mode="out-in">-->
+<!--                <component :is="Component" :key="Component.key" style="height: 100%"/>-->
+<!--              </transition>-->
+<!--            </router-view>-->
+            <router-view>
             </router-view>
           </el-scrollbar>
         </el-main>
@@ -254,7 +256,7 @@ function userLogout() {
   background-color: #f7f8fa;
 }
 
-.dark .main-content-page{
+.dark .main-content-page {
   background-color: #212225;
 }
 

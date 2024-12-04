@@ -10,16 +10,16 @@ defineProps({
 
 <template>
   <div class="card">
-<!--    有title再加-->
+    <!--    有title再加-->
     <div class="card-header" v-if="title">
       <div>
         <!--        translate：移动元素位置-->
         <el-icon style="margin-right: 3px;translate:0 2px">
           <component :is="icon"/>
         </el-icon>
-        {{title}}
-        <div>{{ description }}</div>
+        {{ title }}
       </div>
+      <div>{{ description }}</div>
     </div>
     <slot/>
   </div>
@@ -36,8 +36,8 @@ defineProps({
   padding: 10px;
 }
 
-/*此处需要加>div, 否则first-child样式无法正常赋到元素*/
-.card-header > div  {
+
+.card-header {
   border-bottom: solid 1px var(--el-border-color);
   padding-bottom: 5px;
   margin-bottom: 10px;
