@@ -80,10 +80,48 @@ get('/api/user/details', data => {
   baseForm.phone = data.phone;
   baseForm.qq = data.qq;
   baseForm.wx = data.wx;
-  baseForm.description = descRef.value = data.description;
+  baseForm.description = descRef.value = data.description
+  emailForm.email = store.user.email
   loading.form = false;
 
 })
+
+//冷却时间
+const coldTime = ref(0);
+//若是电子邮件不合法不能发送
+const isEmailValid = ref(true);
+const onValidate = (prop, isValid) => {
+  if (prop === 'email') isEmailValid.value = isValid
+}
+
+function sendEmailCode() {
+
+  emailFormRef.value.validate(isValid => {
+    coldTime.value = 60;
+    get(`/api/auth/ask-code?email=${emailForm.email}&type=modify`, () => {
+      ElMessage.success(`验证码已成功发送到邮箱：${emailForm.email}，请注意查收`)
+      const handle = setInterval(() => {
+        coldTime.value--;
+        if (coldTime.value === 0) {
+          clearInterval(handle);
+        }
+      }, 1000)
+    }, () => {
+      ElMessage.warning(message);
+      coldTime.value = 0;
+    })
+  })
+}
+
+function modifyEmail() {
+ emailFormRef.value.validate(isValid => {
+   post('/api/user/modify-email', emailForm, () => {
+     ElMessage.success('邮件修改成功');
+     store.user.email = emailForm.email;
+     emailForm.code = ''
+   })
+ })
+}
 </script>
 
 <template>
@@ -125,7 +163,7 @@ get('/api/user/details', data => {
 
       <card style="margin-top: 10px" :icon="Message" title="电子邮件设置"
             description="您可以在这类修改默认绑定的电子邮件地址">
-        <el-form :model="emailForm" :rules="rules" ref="emailFormRef" label-position="top"
+        <el-form :model="emailForm" @validate="onValidate" :rules="rules" ref="emailFormRef" label-position="top"
                  style="margin: 0 10px 0 10px">
           <el-form-item label="电子邮件" prop="email">
             <el-input v-model="emailForm.email"/>
@@ -136,12 +174,15 @@ get('/api/user/details', data => {
                 <el-input placeholder="请获取验证码" v-model="emailForm.code"/>
               </el-col>
               <el-col :span="6">
-                <el-button type="success" style="width: 100%" plain>获取验证码</el-button>
+                <el-button @click="sendEmailCode" :disabled="!isEmailValid || coldTime > 0"
+                           type="success" style="width: 100%" plain>
+                  {{ coldTime > 0 ? `请稍后 ${coldTime} 秒` : '获取验证码' }}
+                </el-button>
               </el-col>
             </el-row>
           </el-form-item>
           <div>
-            <el-button :icon="Refresh" type="success">更新电子邮件</el-button>
+            <el-button :icon="Refresh" @click="modifyEmail" type="success">更新电子邮件</el-button>
           </div>
         </el-form>
 
