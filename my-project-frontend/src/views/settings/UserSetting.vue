@@ -95,7 +95,6 @@ const onValidate = (prop, isValid) => {
 }
 
 function sendEmailCode() {
-
   emailFormRef.value.validate(isValid => {
     if (isValid) {
       coldTime.value = 60;
