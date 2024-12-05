@@ -23,5 +23,6 @@ public class Account implements BaseData {
     String password;
     String email;
     String role;
+    String avatar;
     LocalDateTime registerTime;
 }
