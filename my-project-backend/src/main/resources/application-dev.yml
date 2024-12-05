@@ -51,7 +51,7 @@ spring:
       credentials: false
       methods: '*'
   minio:
-    endpoint: '192.168.182.131:9000' # MinIO 服务的地址
+    endpoint: 'http://192.168.182.131:9000' # MinIO 服务的地址
     username: 'minio_zYZMCN'     # MinIO 的访问密钥
     password: 'minio_QEDnaQ'     # MinIO 的秘密密钥
     #bucket-name: your_bucket_name    # 默认的存储桶名称
