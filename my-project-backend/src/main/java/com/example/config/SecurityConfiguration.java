@@ -54,6 +54,8 @@ public class SecurityConfiguration {
         return http
                 .authorizeHttpRequests(conf -> conf
                         .requestMatchers("/api/auth/**", "/error").permitAll()
+                        //头像为静态资源，我们这边给放行
+                        .requestMatchers("/images/**").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
                         .anyRequest().hasAnyRole(Const.ROLE_DEFAULT)
                 )

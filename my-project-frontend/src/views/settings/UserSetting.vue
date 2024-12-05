@@ -4,8 +4,9 @@ import Card from "@/components/Card.vue";
 import {Message, Notebook, Refresh, Select, User} from "@element-plus/icons-vue";
 import {useStore} from "@/store";
 import {computed, onMounted, reactive, ref} from "vue";
-import {get, post} from "@/net";
+import {accessHeader, get, post} from "@/net";
 import {ElMessage} from "element-plus";
+import axios from "axios";
 
 const store = useStore()
 
@@ -115,20 +116,36 @@ function sendEmailCode() {
 }
 
 function modifyEmail() {
- emailFormRef.value.validate(isValid => {
-  if (isValid){
-    post('/api/user/modify-email', emailForm, () => {
-      ElMessage.success('邮件修改成功');
-      store.user.email = emailForm.email;
-      emailForm.code = ''
-    })
+  emailFormRef.value.validate(isValid => {
+    if (isValid) {
+      post('/api/user/modify-email', emailForm, () => {
+        ElMessage.success('邮件修改成功');
+        store.user.email = emailForm.email;
+        emailForm.code = ''
+      })
+    }
+  })
+}
+
+function beforeAvatarUpload(rawFile) {
+  if (rawFile.type !== 'image/jpeg' && rawFile.type !== 'image/png') {
+    ElMessage.error('头像只能是 JPG/PNG 格式的')
+    return false;
+  } else if (rawFile.size / 1024 > 100) {
+    ElMessage.error("头像大小不能大于100KB");
+    return false
   }
- })
+  return true;
+}
+
+function uploadSuccess(response) {
+  ElMessage.success('头像上传成功');
+  store.user.avatar = response.data;
 }
 </script>
 
 <template>
-<!--  设置max-width: 950px; margin: auto以让界面元素不会因为页面的拖动拉长而显得比例过于失调-->
+  <!--  设置max-width: 950px; margin: auto以让界面元素不会因为页面的拖动拉长而显得比例过于失调-->
   <div style="display: flex; max-width: 950px; margin: auto">
     <div class="setting-left">
       <card :icon="User" title="账号信息设置"
@@ -199,7 +216,18 @@ function modifyEmail() {
         <card>
           <div style="text-align: center;padding: 5px 15px 0 15px">
             <div>
-              <el-avatar :size="70" src="https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png"/>
+              <el-avatar :size="70" :src="store.avatarUrl"/>
+              <div style="margin: 5px 0">
+                <!--头像上传地址，关闭准备上传的文件列表，检查图像大小-->
+                <el-upload :action="axios.defaults.baseURL+'/api/image/avatar'"
+                           :show-file-list="false"
+                           :before-upload="beforeAvatarUpload"
+                           :on-success="uploadSuccess"
+                           :headers="accessHeader()">
+                  <el-button size="small" round>修改头像</el-button>
+                </el-upload>
+
+              </div>
               <div style="font-weight: bold">你好，{{ store.user.username }}</div>
             </div>
           </div>

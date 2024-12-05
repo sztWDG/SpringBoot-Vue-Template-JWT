@@ -67,7 +67,7 @@ function userLogout() {
           </div>
           <!--          dropdown: 鼠标悬浮之后显示列表信息-->
           <el-dropdown>
-            <el-avatar src="https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png"/>
+            <el-avatar :src="store.avatarUrl"/>
             <template #dropdown>
               <el-dropdown-item>
                 <el-icon>
