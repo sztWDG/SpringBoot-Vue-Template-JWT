@@ -55,6 +55,8 @@ spring:
     username: 'minio_zYZMCN'     # MinIO 的访问密钥
     password: 'minio_QEDnaQ'     # MinIO 的秘密密钥
     #bucket-name: your_bucket_name    # 默认的存储桶名称
+  weather:
+    key: 7dad55010625475b8d804c3185392b01
 
 
 
