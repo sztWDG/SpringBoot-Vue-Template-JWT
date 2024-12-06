@@ -29,7 +29,6 @@ defineProps({
 
 .card {
   border-radius: 5px;
-  border: solid 1px var(--el-border-color);
   background-color: var(--el-bg-color);
   box-sizing: border-box;
   min-height: 20px;
