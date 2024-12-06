@@ -47,7 +47,8 @@ public class WeatherImpl implements WeatherService {
         //location为空
         if (geo == null) return null;
         //这边location需要复用，所以以上的location转为geo。
-        JSONObject location = geo.getJSONObject("location");
+        //注意：这边获取的json是个数组形式，虽然只有一组数据，但是也得getJSONArray，并且选择index为0的数据
+        JSONObject location = geo.getJSONArray("location").getJSONObject(0);
         int id = location.getInteger("id");
         String key = "weather:" + id;
         String cache = template.opsForValue().get(key);
@@ -75,7 +76,7 @@ public class WeatherImpl implements WeatherService {
 
         //24小时预测天气
         JSONObject hourly = this.decompressStringToJson(rest.getForObject(
-                "https://devapi.qweather.com/v7/weather/now?location="
+                "https://devapi.qweather.com/v7/weather/24h?location="
                         + id + "&key=" + weatherKey, byte[].class));
         if (hourly == null) return null;
         //注意要提取jsonArray中的hourly，限制获取前五个数据
