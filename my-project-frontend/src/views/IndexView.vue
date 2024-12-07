@@ -100,9 +100,11 @@ function userLogout() {
             <!-- 100vh-55px，55px为header高度。导航菜单高度拉满，占据整个左边-->
             <!-- 默认展示子菜单中的1-1，也就是下面设置的index为1-1的校园论坛-->
             <!-- 动态地使用当前路由作为path -->
+            <!--设置初始全部展开（否则界面略显单调） -->
             <el-menu
                 router
                 :default-active="$route.path"
+                :default-openeds="['1','2','3']"
                 style="height: calc(100vh - 55px)">
               <el-sub-menu index="1">
                 <template #title>

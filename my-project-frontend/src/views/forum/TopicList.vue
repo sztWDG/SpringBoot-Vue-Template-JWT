@@ -3,9 +3,10 @@
 import LightCard from "@/components/LightCard.vue";
 import {Calendar, CollectionTag, EditPen, Link} from "@element-plus/icons-vue";
 import Weather from "@/components/Weather.vue";
-import {computed, reactive} from "vue";
+import {computed, reactive, ref} from "vue";
 import {get} from "@/net";
 import {ElMessage} from "element-plus";
+import TopicEditor from "@/components/TopicEditor.vue";
 
 const weather = reactive({
   location: {},
@@ -13,6 +14,9 @@ const weather = reactive({
   hourly: [],
   success: false
 })
+
+//默认不呼出弹窗
+const editor = ref(false)
 
 // 计算日期
 const today = computed(() => {
@@ -29,7 +33,7 @@ navigator.geolocation.getCurrentPosition(position => {
     weather.success = true;
   })
 }, error => {
-  consle.info(error);
+  console.info(error);
   ElMessage.warning('位置信息获取超时，请检测网络设置');
   get(`api/forum/weather?longitude=116.40529&latitude=39.90499}`,data => {
     Object.assign(weather, data)
@@ -44,9 +48,11 @@ navigator.geolocation.getCurrentPosition(position => {
 
 <template>
   <div style="display: flex; margin: 20px auto; gap:20px; max-width: 900px">
+    <!--左侧 -->
     <div style="flex: 1;">
       <light-card>
-        <div class="create-topic">
+        <!--这边点击发表主题，单向绑定弹出编辑框 -->
+        <div class="create-topic" @click="editor = true">
           <el-icon><EditPen/></el-icon>点击发表主题...
         </div>
       </light-card>
@@ -63,7 +69,7 @@ navigator.geolocation.getCurrentPosition(position => {
         </light-card>
       </div>
     </div>
-
+    <!--右侧 -->
     <div style="width: 280px">
       <div style="position: sticky;top: 20px">
         <light-card>
@@ -122,6 +128,9 @@ navigator.geolocation.getCurrentPosition(position => {
 
       </div>
     </div>
+
+    <!--话题编辑 -->
+    <topic-editor :show="editor" @close="editor = false"/>
   </div>
 
 </template>
