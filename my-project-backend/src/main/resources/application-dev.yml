@@ -9,15 +9,15 @@ spring:
     username: 15059993560@163.com
     password: FNgiwtjK7dcmcmxz
   rabbitmq:
-    addresses: 192.168.182.131
+    addresses: 192.168.65.128
     username: rabbitmq
     password: rabbitmq
     virtual-host: /
     port: 15672
   datasource:
-    url: jdbc:mysql://192.168.182.131:3306/personal_forum?useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    url: jdbc:mysql://192.168.65.128:3306/personal_forum?useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
     username: root
-    password: mysql_yCX36r
+    password: mysql_jxNrWx
     driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:
       maximum-pool-size: 10        # 最大连接数
@@ -27,8 +27,8 @@ spring:
       max-lifetime: 1800000        # 连接最大生命周期（毫秒）
   data:
     redis:
-      host: 192.168.182.131
-      password: redis_dpCC8C
+      host: 192.168.65.128
+      password: redis_F8xEXx
   security:
     jwt:
       key: 'abcdefghijklmn'
@@ -51,9 +51,9 @@ spring:
       credentials: false
       methods: '*'
   minio:
-    endpoint: 'http://192.168.182.131:9000' # MinIO 服务的地址
-    username: 'minio_zYZMCN'     # MinIO 的访问密钥
-    password: 'minio_QEDnaQ'     # MinIO 的秘密密钥
+    endpoint: 'http://192.168.65.128:9000' # MinIO 服务的地址
+    username: 'minio_zkpkeX'     # MinIO 的访问密钥
+    password: 'minio_PHjNEk'     # MinIO 的秘密密钥
     #bucket-name: your_bucket_name    # 默认的存储桶名称
   weather:
     key: 7dad55010625475b8d804c3185392b01
