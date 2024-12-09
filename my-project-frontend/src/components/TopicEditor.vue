@@ -16,6 +16,7 @@ const editor = reactive({
   type: null,
   title: '',
   text: '',
+  loading: false
 })
 
 const types = [

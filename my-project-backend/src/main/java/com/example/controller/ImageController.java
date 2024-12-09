@@ -18,23 +18,43 @@ public class ImageController {
     @Resource
     ImageService imageService;
 
+
+    @PostMapping("/cache")
+    public RestBean<String> uploadImage(@RequestParam("file") MultipartFile file,
+                                        @RequestAttribute(Const.ATTR_USER_ID) int id) throws IOException {
+
+        if (file.getSize()>1024*1024*5){
+            return RestBean.failure(400,"图片不能大于5MB");
+        }
+        log.info("正在进行图片上传操作");
+        String url = imageService.uploadImage(file, id);
+
+        if (url != null) {
+            log.info("头像上传成功，大小：" + file.getSize());
+            return RestBean.success(url);
+        } else {
+            return RestBean.failure(400, "图片上传失败，请联系管理员");
+        }
+    }
+
+
     @PostMapping("/avatar")
     //保存一个随机的uuid字符串，不用用户ID。1.若头像地址不变，会出加载不出。2.防爬虫等
     public RestBean<String> uploadAvatar(@RequestParam("file") MultipartFile file,
                                          @RequestAttribute(Const.ATTR_USER_ID) int id)
             throws IOException {
 
-        if (file.getSize() > 1025 * 100){
-            return RestBean.failure(400,"头像图片不能大于100KB");
+        if (file.getSize() > 1024 * 100) {
+            return RestBean.failure(400, "头像图片不能大于100KB");
         }
 
         log.info("正在进行头像上传操作");
         String url = imageService.uploadAvatar(file, id);
 
-        if (url != null){
+        if (url != null) {
             log.info("头像上传成功，大小：" + file.getSize());
             return RestBean.success(url);
-        }else {
+        } else {
             return RestBean.failure(400, "头像上传失败，请联系管理员");
         }
     }

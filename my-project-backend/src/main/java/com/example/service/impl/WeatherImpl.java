@@ -4,6 +4,7 @@ import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
 import com.example.entity.vo.request.WeatherVO;
 import com.example.service.WeatherService;
+import com.example.utils.Const;
 import jakarta.annotation.Resource;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -15,7 +16,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 import java.util.zip.GZIPInputStream;
-import java.util.zip.GZIPOutputStream;
 
 @Service
 public class WeatherImpl implements WeatherService {
@@ -50,7 +50,7 @@ public class WeatherImpl implements WeatherService {
         //注意：这边获取的json是个数组形式，虽然只有一组数据，但是也得getJSONArray，并且选择index为0的数据
         JSONObject location = geo.getJSONArray("location").getJSONObject(0);
         int id = location.getInteger("id");
-        String key = "weather:" + id;
+        String key = Const.FORUM_WEATHER_CACHE + id;
         String cache = template.opsForValue().get(key);
 
         if (cache != null) return JSONObject.parseObject(cache).to(WeatherVO.class);

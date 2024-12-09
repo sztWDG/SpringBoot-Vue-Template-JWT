@@ -8,14 +8,8 @@ import jakarta.servlet.ServletOutputStream;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
-import lombok.val;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import javax.swing.plaf.TreeUI;
-import java.io.IOException;
 
 @Slf4j
 @RestController
@@ -29,6 +23,7 @@ public class ObjectController {
     public void imageFetch(HttpServletRequest request, HttpServletResponse response) throws Exception {
 
         this.fetchImage(request, response);
+        response.setHeader("Content-Type", "image/jpg");
 
     }
 
