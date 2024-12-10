@@ -4,6 +4,7 @@ import com.example.entity.RestBean;
 import com.example.service.ImageService;
 import com.example.utils.Const;
 import jakarta.annotation.Resource;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -21,7 +22,8 @@ public class ImageController {
 
     @PostMapping("/cache")
     public RestBean<String> uploadImage(@RequestParam("file") MultipartFile file,
-                                        @RequestAttribute(Const.ATTR_USER_ID) int id) throws IOException {
+                                        @RequestAttribute(Const.ATTR_USER_ID) int id,
+                                        HttpServletResponse response) throws IOException {
 
         if (file.getSize()>1024*1024*5){
             return RestBean.failure(400,"图片不能大于5MB");
@@ -33,6 +35,7 @@ public class ImageController {
             log.info("头像上传成功，大小：" + file.getSize());
             return RestBean.success(url);
         } else {
+            response.setStatus(400);
             return RestBean.failure(400, "图片上传失败，请联系管理员");
         }
     }

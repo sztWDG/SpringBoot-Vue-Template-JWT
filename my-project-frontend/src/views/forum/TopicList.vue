@@ -31,13 +31,16 @@ navigator.geolocation.getCurrentPosition(position => {
   get(`api/forum/weather?longitude=${longitude}&latitude=${latitude}`, data => {
     Object.assign(weather, data)
     weather.success = true;
+
   })
 }, error => {
+
   console.info(error);
   ElMessage.warning('位置信息获取超时，请检测网络设置');
   get(`api/forum/weather?longitude=116.40529&latitude=39.90499}`,data => {
     Object.assign(weather, data)
     weather.success = true;
+
   })
 }, {
   //3秒钟还未获取到，则错误了
@@ -160,4 +163,10 @@ navigator.geolocation.getCurrentPosition(position => {
     cursor: pointer;
   }
 }
+
+.dark .create-topic {
+  background-color: #232323;
+
+}
+
 </style>

@@ -36,7 +36,7 @@ public class ImageImpl extends ServiceImpl<ImageStoreMapper, StoreImage> impleme
     @Resource
     FlowUtils flowUtils;
 
-    private SimpleDateFormat format = new SimpleDateFormat("yyyyMMdd");
+    private final SimpleDateFormat format = new SimpleDateFormat("yyyyMMdd");
 
     @Override
     public void fetchImageFromMinio(OutputStream stream, String image) throws Exception {
@@ -52,7 +52,7 @@ public class ImageImpl extends ServiceImpl<ImageStoreMapper, StoreImage> impleme
     public String uploadImage(MultipartFile file, int id) throws IOException {
         //限制用户上传图片的规格和频率
         String key = Const.FORUM_IMAGE_COUNTER + id;
-        if (flowUtils.limitPeriodCounterCheck(key, 20, 3600)){
+        if (!flowUtils.limitPeriodCounterCheck(key, 20, 3600)){
             return null;
         }
         String imageName = UUID.randomUUID().toString().replace("-","");

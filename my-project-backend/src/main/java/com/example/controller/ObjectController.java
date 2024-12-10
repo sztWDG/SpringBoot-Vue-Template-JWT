@@ -18,7 +18,7 @@ public class ObjectController {
     @Resource
     ImageService imageService;
 
-    @GetMapping("/images/avatar/**")
+    @GetMapping("/images/**")
     //优化：相应图片，设置特殊响应头，为一些比较固定的参数设置一个缓存周期，避免频繁访问后端，优化程序
     public void imageFetch(HttpServletRequest request, HttpServletResponse response) throws Exception {
 

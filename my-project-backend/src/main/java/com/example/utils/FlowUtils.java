@@ -57,12 +57,15 @@ public class FlowUtils {
      * @param period 计数周期
      * @return 是否通过限流检查
      */
+
     public boolean limitPeriodCheck(String counterKey, String blockKey, int blockTime, int frequency, int period){
         return this.internalCheck(counterKey, frequency, period, (overclock) -> {
                     if (overclock)
                         template.opsForValue().set(blockKey, "", blockTime, TimeUnit.SECONDS);
                     return !overclock;
+
                 });
+        
     }
 
     /**
@@ -77,6 +80,8 @@ public class FlowUtils {
 
     }
 
+
+
     /**
      * 内部使用请求限制主要逻辑
      * @param key 计数键
@@ -88,10 +93,11 @@ public class FlowUtils {
     private boolean internalCheck(String key, int frequency, int period, LimitAction action){
         String count = template.opsForValue().get(key);
         if (count != null) {
-            long value = Optional.ofNullable(template.opsForValue().increment(key)).orElse(0L);
+            long value = Optional.ofNullable(template.opsForValue().increment(key)).orElse(Long.valueOf(0L));
             int c = Integer.parseInt(count);
             if(value != c + 1)
                 template.expire(key, period, TimeUnit.SECONDS);
+            //返回真不通过，假则通过
             return action.run(value > frequency);
         } else {
             template.opsForValue().set(key, "1", period, TimeUnit.SECONDS);

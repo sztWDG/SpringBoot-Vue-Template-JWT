@@ -7,7 +7,7 @@ import lombok.Data;
 import java.util.Date;
 
 @Data
-@TableName("db_image_sore")
+@TableName("db_image_store")
 @AllArgsConstructor
 public class StoreImage {
     Integer uid;
