@@ -41,7 +41,7 @@ const editor = reactive({
 })
 
 //重置发文
-function initEditor(){
+function initEditor() {
   refEditor.value.setContents('', 'user');
   editor.title = '';
   editor.type = null
@@ -58,13 +58,13 @@ function initEditor(){
 
 
 //显示裸文本
-function deltaToText(delta){
+function deltaToText(delta) {
   if (!delta) return "";
   let str = "";
   for (let op of delta.ops) {
     str += op.insert
     //过滤掉换行等字符
-    return str.replace(/\s/g,"")
+    return str.replace(/\s/g, "")
   }
 
   for (let op of delta.ops) {
@@ -80,15 +80,15 @@ function submitTopic() {
   // //调用deltaTotext来显示裸文本
   // console.info(deltaToText(editor.text))
   const text = deltaToText(editor.text);
-  if (text.length > 20000){
+  if (text.length > 20000) {
     ElMessage.warning('字数超出限制，无法发布主题！');
     return;
   }
-  if (!editor.title){
+  if (!editor.title) {
     ElMessage.warning('请填写标题!');
     return;
   }
-  if (!editor.type){
+  if (!editor.type) {
     ElMessage.warning('请选择一个合适的帖子类型！');
     return;
   }
@@ -189,7 +189,7 @@ const editorOption = {
             <el-option v-for="item in editor.types" :value="item">
               <div>
                 <color-dot :color="item.color"/>
-                <span style="margin-left: 10px">{{item.name}}</span>
+                <span style="margin-left: 10px">{{ item.name }}</span>
               </div>
             </el-option>
           </el-select>
@@ -202,8 +202,8 @@ const editorOption = {
 
       <div style="margin-top: 10px;font-size: 13px;color: gray">
         <!--展示话题类型描述 -->
-        <color-dot :color="editor.type.color" />
-       <span style="margin-left: 5px">{{editor.type? editor.type.description : '请在上方选择一个帖子类型！'}}</span>
+        <color-dot :color="editor.type ? editor.type.color : '#dedede'"/>
+        <span style="margin-left: 5px">{{ editor.type ? editor.type.description : '请在上方选择一个帖子类型！' }}</span>
       </div>
 
       <!--使用富文本编辑器quill
@@ -221,7 +221,7 @@ const editorOption = {
 
       <div style="display: flex;justify-content: space-between;margin-top: 5px">
         <div style="color: gray;font-size: 13px">
-          当前字数 {{contentLength}}（最大支持20000字）
+          当前字数 {{ contentLength }}（最大支持20000字）
         </div>
         <div>
           <el-button type="success" @click="submitTopic" :icon="Check" plain>立即发表主题</el-button>

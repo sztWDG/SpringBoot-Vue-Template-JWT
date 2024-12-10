@@ -13,7 +13,7 @@ defineProps({
         <i :class="`qi-${data.now.icon}-fill`"></i>
       </div>
       <div style="font-weight: bold;text-align: center">
-        <div style="font-size: 25px">{{ data.now.temp }}</div>
+        <div style="font-size: 25px">{{ data.now.temp }}℃</div>
         <div style="font-size: 15px">{{ data.now.text }}</div>
       </div>
       <div style="margin-top: 13px">
@@ -30,7 +30,7 @@ defineProps({
         <div style="font-size: 23px">
           <i :class="`qi-${item.icon}-fill`"></i>
         </div>
-        <div style="font-size: 12px">{{item.temp}}</div>
+        <div style="font-size: 12px">{{item.temp}}℃</div>
 
       </div>
     </div>

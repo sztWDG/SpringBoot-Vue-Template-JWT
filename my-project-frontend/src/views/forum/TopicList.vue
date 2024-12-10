@@ -18,11 +18,17 @@ const weather = reactive({
 //默认不呼出弹窗
 const editor = ref(false)
 
+
+const list = ref(null)
+
 // 计算日期
 const today = computed(() => {
   const date = new Date();
   return `${date.getFullYear()} 年 ${date.getMonth() + 1} 月 ${date.getDate()} 日`
 })
+
+//记得写请求参数
+get('api/forum/list-topic?page=0&type=0', data => list.value = data)
 
 //前端请求获取位置信息
 navigator.geolocation.getCurrentPosition(position => {
@@ -37,7 +43,7 @@ navigator.geolocation.getCurrentPosition(position => {
 
   console.info(error);
   ElMessage.warning('位置信息获取超时，请检测网络设置');
-  get(`api/forum/weather?longitude=116.40529&latitude=39.90499}`,data => {
+  get(`api/forum/weather?longitude=116.40529&latitude=39.90499}`, data => {
     Object.assign(weather, data)
     weather.success = true;
 
@@ -58,7 +64,10 @@ navigator.geolocation.getCurrentPosition(position => {
       <light-card>
         <!--这边点击发表主题，单向绑定弹出编辑框 -->
         <div class="create-topic" @click="editor = true">
-          <el-icon><EditPen/></el-icon>点击发表主题...
+          <el-icon>
+            <EditPen/>
+          </el-icon>
+          点击发表主题...
         </div>
       </light-card>
 
@@ -68,8 +77,9 @@ navigator.geolocation.getCurrentPosition(position => {
       </light-card>
 
       <div style="margin-top: 10px;display: flex;flex-direction: column;gap: 10px">
-        <light-card style="height: 150px" v-for="item in 10">
-
+        <light-card v-for="item in list">
+          <div>{{item.title}}</div>
+          <div>{{item.text}}</div>
 
         </light-card>
       </div>
@@ -140,7 +150,7 @@ navigator.geolocation.getCurrentPosition(position => {
 
 </template>
 
-<style  lang="less" scoped>
+<style lang="less" scoped>
 .info-text {
   display: flex;
   justify-content: space-between;

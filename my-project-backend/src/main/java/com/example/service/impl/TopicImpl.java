@@ -1,13 +1,16 @@
 package com.example.service.impl;
 
+import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.example.entity.dto.Topic;
 import com.example.entity.dto.TopicType;
 import com.example.entity.vo.request.TopicCreateVO;
+import com.example.entity.vo.response.TopicPreviewVO;
 import com.example.mapper.TopicMapper;
 import com.example.mapper.TopicTypeMapper;
 import com.example.service.TopicService;
+import com.example.utils.CacheUtils;
 import com.example.utils.Const;
 import com.example.utils.FlowUtils;
 import jakarta.annotation.PostConstruct;
@@ -15,9 +18,7 @@ import jakarta.annotation.Resource;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
-import java.util.Date;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -29,10 +30,14 @@ public class TopicImpl extends ServiceImpl<TopicMapper, Topic> implements TopicS
     @Resource
     FlowUtils flowUtils;
 
+    @Resource
+    CacheUtils cacheUtils;
+
     //???判断所有合法typeID
-    private  Set<Integer> types = null;
+    private Set<Integer> types = null;
+
     @PostConstruct
-    private void initTypes(){
+    private void initTypes() {
         types = this.listTypes()
                 .stream()
                 .map(TopicType::getId)
@@ -62,19 +67,73 @@ public class TopicImpl extends ServiceImpl<TopicMapper, Topic> implements TopicS
 
         //没问题，对发文进行保存
         Topic topic = new Topic();
-        BeanUtils.copyProperties(vo,topic);
+        BeanUtils.copyProperties(vo, topic);
         topic.setContent(vo.getContent().toJSONString());
         topic.setUid(uid);
         topic.setTime(new Date());
 
-        if (this.save(topic)){
+        if (this.save(topic)) {
+            //保存之后全部清除
+            cacheUtils.deleteCache(Const.FORUM_TOPIC_PREVIEW_CACHE+"*");
             return null;
-        }else {
+        } else {
             return "内部错误，请联系管理员！";
         }
 
     }
 
+    @Override
+    public List<TopicPreviewVO> listTopicByPage(int page, int type) {
+        //造一个key
+        String key = Const.FORUM_TOPIC_PREVIEW_CACHE + page + ":" + type;
+        List<TopicPreviewVO> list = cacheUtils.takeListFromCache(key,TopicPreviewVO.class);
+        //如果list不为空，则直接返回，为空则重新构造一次
+        if (list != null) return list;
+        //接收
+        List<Topic> topics;
+        //控制每页的帖子数量
+        if (type == 0)
+            topics = baseMapper.topicList(page * 10);
+        else
+            topics = baseMapper.topicListByType(page, type);
+
+        if (topics.isEmpty()) return null;
+        list = topics.stream().map(this::resolveToPreview).toList();
+        //调用缓存工具类，对List类进行保存，过期时间给60秒
+        cacheUtils.savaListToCache(key,list,60);
+
+        return list;
+    }
+
+    private TopicPreviewVO resolveToPreview(Topic topic) {
+        TopicPreviewVO vo = new TopicPreviewVO();
+        BeanUtils.copyProperties(topic, vo);
+        List<String> images = new ArrayList<>();
+        StringBuilder previewText = new StringBuilder();
+        JSONArray ops = JSONObject.parseObject(topic.getContent()).getJSONArray("ops");
+        for (Object op : ops) {
+            Object insert = JSONObject.from(op).get("insert");
+            //判断insert是不是普通的字符串（文本）
+            if (insert instanceof String text) {
+                if (previewText.length() >= 300) continue;
+                previewText.append(text);
+            } else if (insert instanceof Map<?, ?> map) {
+                //！！！认真学习优雅的写法
+                Optional.ofNullable(map.get("image"))
+                        //Lambda表达式
+                        /*
+                         * 1. obj ->：这是 lambda 表达式的参数部分，表示传入了一个名为 obj 的变量。
+                         * 2. images.add(obj.toString())：这是 lambda 表达式的函数体部分，
+                         * 表示对参数 obj 调用 toString() 方法，将其字符串表示形式添加到集合 images 中。*/
+                        .ifPresent(obj -> images.add(obj.toString()));
+            }
+        }
+        vo.setText(previewText.length() > 300
+                ? previewText.substring(0, 300)
+                : previewText.toString());
+        vo.setImages(images);
+        return vo;
+    }
 
     //校验content
     private boolean textLimitCheck(JSONObject object) {
