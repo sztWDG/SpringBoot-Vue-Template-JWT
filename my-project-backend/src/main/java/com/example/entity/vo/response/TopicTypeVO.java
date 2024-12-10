@@ -8,4 +8,5 @@ public class TopicTypeVO {
     int id;
     String name;
     String description;
+    String color;
 }

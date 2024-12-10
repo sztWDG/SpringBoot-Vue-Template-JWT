@@ -8,6 +8,7 @@ import '@vueup/vue-quill/dist/vue-quill.snow.css'
 import axios from "axios";
 import {ElMessage} from "element-plus";
 import {accessHeader, get, post} from "@/net";
+import ColorDot from "@/components/ColorDot.vue";
 
 // import {Check, Document} from "@element-plus/icons-vue";
 // import {computed, reactive, ref} from "vue";
@@ -93,7 +94,7 @@ function submitTopic() {
   }
 //检测没问题，直接发数据
   post('/api/forum/create-Topic', {
-    type: editor.type,
+    type: editor.type.id,
     title: editor.title,
     content: editor.text
   }, () => {
@@ -183,9 +184,14 @@ const editorOption = {
       <div style="display: flex; gap: 10px">
         <div style="width: 120px">
           <!--先判断有没有获取到数据库里面的types，没有的话就不能使用 -->
-          <el-select placeholder="选择主题类型..." v-model="editor.type"
+          <el-select placeholder="选择主题类型..." value-key="id" v-model="editor.type"
                      :disabled="!editor.types.length">
-            <el-option v-for="item in editor.types" :value="item.id" :label="item.name"></el-option>
+            <el-option v-for="item in editor.types" :value="item">
+              <div>
+                <color-dot :color="item.color"/>
+                <span style="margin-left: 10px">{{item.name}}</span>
+              </div>
+            </el-option>
           </el-select>
         </div>
         <div style="flex: 1;">
@@ -194,10 +200,16 @@ const editorOption = {
         </div>
       </div>
 
+      <div style="margin-top: 10px;font-size: 13px;color: gray">
+        <!--展示话题类型描述 -->
+        <color-dot :color="editor.type.color" />
+       <span style="margin-left: 5px">{{editor.type? editor.type.description : '请在上方选择一个帖子类型！'}}</span>
+      </div>
+
       <!--使用富文本编辑器quill
       QUETION:这里加了overflow:hidden之后就是显示不出来下边框
       SOLVED: 原来calc计算函数里面要严格使用空格-->
-      <div style="margin-top: 15px;height: 460px;overflow: hidden;border-radius: 5px"
+      <div style="margin-top: 10px;height: 460px;overflow: hidden;border-radius: 5px"
            v-loading="editor.loading"
            element-loading-text="正在上传图片，请稍后...">
         <!-- 记得需要去导入css,在node-modules里面找css样式，减去toolbar的高度-->
@@ -209,7 +221,7 @@ const editorOption = {
 
       <div style="display: flex;justify-content: space-between;margin-top: 5px">
         <div style="color: gray;font-size: 13px">
-          当前字数666 {{contentLength}}（最大支持2000字）
+          当前字数 {{contentLength}}（最大支持20000字）
         </div>
         <div>
           <el-button type="success" @click="submitTopic" :icon="Check" plain>立即发表主题</el-button>

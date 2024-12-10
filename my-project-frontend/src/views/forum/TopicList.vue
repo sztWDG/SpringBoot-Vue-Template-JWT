@@ -47,6 +47,8 @@ navigator.geolocation.getCurrentPosition(position => {
   timeout: 3000,
   enableHighAccuracy: true
 })
+
+
 </script>
 
 <template>

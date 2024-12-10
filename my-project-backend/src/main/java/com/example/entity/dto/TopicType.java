@@ -11,5 +11,6 @@ public class TopicType implements BaseData {
     int id;
     String name;
     String description;
+    String color;
 
 }
