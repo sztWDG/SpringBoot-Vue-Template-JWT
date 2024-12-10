@@ -1,7 +1,6 @@
 package com.example.listener;
 
 import jakarta.annotation.Resource;
-import org.apache.ibatis.annotations.Case;
 import org.springframework.amqp.rabbit.annotation.RabbitHandler;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.beans.factory.annotation.Value;

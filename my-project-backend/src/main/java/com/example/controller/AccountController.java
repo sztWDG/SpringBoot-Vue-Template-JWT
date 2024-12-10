@@ -3,7 +3,6 @@ package com.example.controller;
 import com.example.entity.RestBean;
 import com.example.entity.dto.Account;
 import com.example.entity.dto.AccountDetails;
-import com.example.entity.dto.AccountPrivacy;
 import com.example.entity.vo.request.ChangePasswordVO;
 import com.example.entity.vo.request.DetailsSaveVO;
 import com.example.entity.vo.request.ModifyEmailVO;
@@ -15,13 +14,12 @@ import com.example.service.AccountDetailsService;
 import com.example.service.AccountPrivacyService;
 import com.example.service.AccountService;
 import com.example.utils.Const;
+import com.example.utils.ControllerUtils;
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
-import org.springframework.beans.BeanUtils;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Optional;
-import java.util.function.Supplier;
 
 @RestController
 @RequestMapping("/api/user")
@@ -35,6 +33,9 @@ public class AccountController {
 
     @Resource
     AccountPrivacyService privacyService;
+
+    @Resource
+    ControllerUtils utils;
 
 
     @GetMapping("/info")
@@ -69,13 +70,13 @@ public class AccountController {
 
         //String result = service.modifyEmail(id, vo);
         //return result == null ? RestBean.success() : RestBean.failure(400,result);
-        return this.messageHandle(()->service.modifyEmail(id, vo));
+        return utils.messageHandle(()->service.modifyEmail(id, vo));
     }
 
     @PostMapping("/change-password")
     public RestBean<Void> changePassword(@RequestAttribute(Const.ATTR_USER_ID) int id,
                                          @RequestBody @Valid ChangePasswordVO vo){
-        return this.messageHandle(()->service.changePassword(id, vo));
+        return utils.messageHandle(()->service.changePassword(id, vo));
 
 
     }
@@ -93,12 +94,12 @@ public class AccountController {
         return RestBean.success(privacyService.accountPrivacy(id).asViewObject(AccountPrivacyVO.class));
     }
 
-    //很关键
-    private <T> RestBean<T> messageHandle(Supplier<String> action){
-        String message = action.get();
-        if(message == null)
-            return RestBean.success();
-        else
-            return RestBean.failure(400, message);
-    }
+    //很关键,因为多处地方用到，所以统一到工具类里面，增强代码复用性
+//    private <T> RestBean<T> messageHandle(Supplier<String> action){
+//        String message = action.get();
+//        if(message == null)
+//            return RestBean.success();
+//        else
+//            return RestBean.failure(400, message);
+//    }
 }

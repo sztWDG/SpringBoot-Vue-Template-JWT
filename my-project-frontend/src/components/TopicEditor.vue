@@ -1,13 +1,13 @@
 <script setup>
 import {Check, Document} from "@element-plus/icons-vue";
-import {reactive} from "vue";
+import {computed, reactive, ref} from "vue";
 import {Quill, QuillEditor} from "@vueup/vue-quill";
 import ImageResize from "quill-image-resize-vue";
 import {ImageExtend, QuillWatch} from "quill-image-super-solution-module";
 import '@vueup/vue-quill/dist/vue-quill.snow.css'
 import axios from "axios";
 import {ElMessage} from "element-plus";
-import {accessHeader, get} from "@/net";
+import {accessHeader, get, post} from "@/net";
 
 // import {Check, Document} from "@element-plus/icons-vue";
 // import {computed, reactive, ref} from "vue";
@@ -25,8 +25,10 @@ defineProps({
   show: Boolean
 })
 
-//关闭弹窗时，标记为close，通知外部，得到结果
-const emit = defineEmits(['close'])
+const refEditor = ref()
+
+//表示状态！关闭弹窗时，标记为close，通知外部，得到结果
+const emit = defineEmits(['close', 'success'])
 
 //存储数据
 const editor = reactive({
@@ -37,6 +39,13 @@ const editor = reactive({
   types: []
 })
 
+//重置发文
+function initEditor(){
+  refEditor.value.setContents('', 'user');
+  editor.title = '';
+  editor.type = null
+}
+
 //迁移到数据库
 // const types = [
 //   {id:1, name:'日常闲聊',desc:'在这里分享你的各种日常'},
@@ -46,16 +55,59 @@ const editor = reactive({
 //   {id:5, name:'踩坑记录',desc:'把你遇到的坑分享给大家，防止其他人再次入坑'},
 // ]
 
-Quill.register('modules/imageResize', ImageResize)
-Quill.register('modules/ImageExtend', ImageExtend)
+
+//显示裸文本
+function deltaToText(delta){
+  if (!delta) return "";
+  let str = "";
+  for (let op of delta.ops) {
+    str += op.insert
+    //过滤掉换行等字符
+    return str.replace(/\s/g,"")
+  }
+
+  for (let op of delta.ops) {
+
+  }
+}
+
+const contentLength = computed(() => deltaToText(editor.text).length)
+
 
 function submitTopic() {
-  console.info(editor.text);
+  // console.info(editor.text);
+  // //调用deltaTotext来显示裸文本
+  // console.info(deltaToText(editor.text))
+  const text = deltaToText(editor.text);
+  if (text.length > 20000){
+    ElMessage.warning('字数超出限制，无法发布主题！');
+    return;
+  }
+  if (!editor.title){
+    ElMessage.warning('请填写标题!');
+    return;
+  }
+  if (!editor.type){
+    ElMessage.warning('请选择一个合适的帖子类型！');
+    return;
+  }
+//检测没问题，直接发数据
+  post('/api/forum/create-Topic', {
+    type: editor.type,
+    title: editor.title,
+    content: editor.text
+  }, () => {
+    ElMessage.success('帖子发表成功！')
+    //给外界发送一个success状态
+    emit('success')
+  })
 }
 
 //返回后端获取到的数据
 get('/api/forum/types', data => editor.types = data)
 
+Quill.register('modules/imageResize', ImageResize)
+Quill.register('modules/ImageExtend', ImageExtend)
 
 const editorOption = {
   modules: {
@@ -113,8 +165,13 @@ const editorOption = {
 
 <template>
   <div>
-    <!--弹出框，设置从btt也就是从底部弹出，并限制只有点击关闭可以退出，不然随便点击框外退出很烦人-->
-    <el-drawer @close="emit('close')" :model-value="show" direction="btt"
+    <!--弹出框，设置从btt也就是从底部弹出，并限制只有点击关闭可以退出，
+    不然随便点击框外退出很烦人
+    open时，调用一次重置编辑框-->
+    <el-drawer @close="emit('close')"
+               :model-value="show"
+               direction="btt"
+               @open="initEditor"
                :close-on-click-modal="false" :size="650">
       <template #header>
         <div>
@@ -133,7 +190,7 @@ const editorOption = {
         </div>
         <div style="flex: 1;">
           <el-input v-model="editor.title" placeholder="请输入帖子标题..." :prefix-icon="Document"
-                    style="height: 100%"/>
+                    style="height: 100%" maxlength="30"/>
         </div>
       </div>
 
@@ -146,13 +203,13 @@ const editorOption = {
         <!-- 记得需要去导入css,在node-modules里面找css样式，减去toolbar的高度-->
         <!--content=delta让前端数据更加安全 -->
         <quill-editor v-model:content="editor.text" style="height: calc(100% - 45px)"
-                      content-type="delta"
+                      content-type="delta" ref='refEditor'
                       placeholder="今天想分享一些什么呢？" :options="editorOption"/>
       </div>
 
       <div style="display: flex;justify-content: space-between;margin-top: 5px">
         <div style="color: gray;font-size: 13px">
-          当前字数666（最大支持2000字）
+          当前字数666 {{contentLength}}（最大支持2000字）
         </div>
         <div>
           <el-button type="success" @click="submitTopic" :icon="Check" plain>立即发表主题</el-button>

@@ -1,14 +1,16 @@
 package com.example.controller;
 
 import com.example.entity.RestBean;
+import com.example.entity.vo.request.TopicCreateVO;
 import com.example.entity.vo.request.WeatherVO;
 import com.example.entity.vo.response.TopicTypeVO;
 import com.example.service.TopicService;
 import com.example.service.WeatherService;
+import com.example.utils.Const;
+import com.example.utils.ControllerUtils;
 import jakarta.annotation.Resource;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import jakarta.validation.Valid;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -21,6 +23,9 @@ public class ForumController {
 
     @Resource
     TopicService topicService;
+
+    @Resource
+    ControllerUtils utils;
 
 
     //只需要获取数据，并不需要上传什么
@@ -40,4 +45,13 @@ public class ForumController {
                 .map(type -> type.asViewObject(TopicTypeVO.class))
                 .toList());
     }
+
+    @PostMapping("/create-Topic")
+    public RestBean<Void> createTopic(@Valid @RequestBody TopicCreateVO vo,
+                                      @RequestAttribute(Const.ATTR_USER_ID)int id){
+
+        return utils.messageHandle(() -> topicService.createTopic(id,vo));
+    }
+
+
 }

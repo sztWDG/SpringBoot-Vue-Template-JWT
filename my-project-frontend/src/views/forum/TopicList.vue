@@ -132,8 +132,8 @@ navigator.geolocation.getCurrentPosition(position => {
       </div>
     </div>
 
-    <!--话题编辑 -->
-    <topic-editor :show="editor" @close="editor = false"/>
+    <!--话题编辑 发文成功，要关闭编辑框。 关闭编辑框，要关闭编辑框-->
+    <topic-editor :show="editor" @success="editor = false" @close="editor = false"/>
   </div>
 
 </template>
