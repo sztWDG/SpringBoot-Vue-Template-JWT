@@ -1,3 +1,8 @@
 spring:
   profiles:
     active: '@environment@'
+  servlet:
+    multipart:
+      # 设置图片允许范围
+      max-file-size: 10MB
+      max-request-size: 10MB

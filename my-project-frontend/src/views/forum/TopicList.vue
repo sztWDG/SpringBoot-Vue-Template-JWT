@@ -1,12 +1,16 @@
 <script setup>
 
 import LightCard from "@/components/LightCard.vue";
-import {Calendar, CollectionTag, EditPen, Link} from "@element-plus/icons-vue";
+import {Calendar, Clock, CollectionTag, EditPen, Link} from "@element-plus/icons-vue";
 import Weather from "@/components/Weather.vue";
 import {computed, reactive, ref} from "vue";
 import {get} from "@/net";
 import {ElMessage} from "element-plus";
 import TopicEditor from "@/components/TopicEditor.vue";
+import {useStore} from "@/store";
+import axios from "axios";
+
+const store = useStore()
 
 const weather = reactive({
   location: {},
@@ -27,8 +31,19 @@ const today = computed(() => {
   return `${date.getFullYear()} 年 ${date.getMonth() + 1} 月 ${date.getDate()} 日`
 })
 
-//记得写请求参数
-get('api/forum/list-topic?page=0&type=0', data => list.value = data)
+//获取types新址
+get('/api/forum/types', data => store.forum.types = data)
+
+//请求帖子列表封成一个函数
+function updateList(){
+  //记得写请求参数
+  get('api/forum/list-topic?page=0&type=0', data => list.value = data)
+}
+//在一开始的时候调用一次，发帖成功后也调用一次
+updateList()
+
+
+
 
 //前端请求获取位置信息
 navigator.geolocation.getCurrentPosition(position => {
@@ -64,10 +79,7 @@ navigator.geolocation.getCurrentPosition(position => {
       <light-card>
         <!--这边点击发表主题，单向绑定弹出编辑框 -->
         <div class="create-topic" @click="editor = true">
-          <el-icon>
-            <EditPen/>
-          </el-icon>
-          点击发表主题...
+          <el-icon><EditPen/></el-icon>点击发表主题...
         </div>
       </light-card>
 
@@ -76,11 +88,44 @@ navigator.geolocation.getCurrentPosition(position => {
 
       </light-card>
 
+      <!--展示话题内容 -->
       <div style="margin-top: 10px;display: flex;flex-direction: column;gap: 10px">
-        <light-card v-for="item in list">
-          <div>{{item.title}}</div>
-          <div>{{item.text}}</div>
+        <light-card v-for="item in list" class="topic-card">
+          <!--头像 -->
+          <div style="display: flex">
+            <div>
+              <!--获取！怎么做到的？-->
+              <el-avatar :size="30" :src="`${axios.defaults.baseURL}/images${item.avatar}`"/>
+            </div>
+            <!--transform:translatY(-2px)上移 -->
+            <div style="margin-left: 7px;transform: translateY(-2px) ">
+              <div style="font-size: 13px;font-weight: bold">{{item.username}}</div>
+              <div style="font-size: 12px;color: gray">
+                <el-icon><Clock/></el-icon>
+                <div style="margin-left: 2px;display: inline-block;transform: translateY(-2px)">
+                  {{new Date(item.time).toLocaleString()}}
+                </div>
+              </div>
+            </div>
+          </div>
 
+          <div style="margin-top: 5px">
+            <!--EE（阿尔法值）让字体有点透明, 有可能类型是异步加载，帖子列表加载好了，数据没到。要加？-->
+            <div class="topic-type"
+                 :style="{
+              color:store.findTypeById(item.type)?.color + 'EE',
+              'border-color': store.findTypeById(item.type)?.color + '77', //边框颜色
+              'background-color': store.findTypeById(item.type)?.color + '33'
+            }">
+              {{store.findTypeById(item.type)?.name}}
+            </div>
+            <span style="font-weight: bold">{{ item.title }}</span>
+          </div>
+          <div class="topic-content">{{ item.text }}</div>
+          <!--展示图片,采用grid格子布局，并且最多展示3张-->
+          <div style="display: grid;grid-template-columns: repeat(3,1fr);grid-gap: 10px">
+            <el-image class="topic-image" v-for="img in item.images" :src="img"></el-image>
+          </div>
         </light-card>
       </div>
     </div>
@@ -145,12 +190,58 @@ navigator.geolocation.getCurrentPosition(position => {
     </div>
 
     <!--话题编辑 发文成功，要关闭编辑框。 关闭编辑框，要关闭编辑框-->
-    <topic-editor :show="editor" @success="editor = false" @close="editor = false"/>
+    <!--updateList()获取帖子列表，在发帖成功后也调用一次,以便刷新展示-->
+    <topic-editor :show="editor" @success="editor = false;updateList()" @close="editor = false"/>
   </div>
 
 </template>
 
 <style lang="less" scoped>
+//处理话题展示样式
+.topic-card {
+  padding: 15px;
+  /*当鼠标悬停在元素上时，元素会在 0.3 秒内逐渐放大到 1.1 倍。
+  鼠标移开时，元素会在 0.3 秒内逐渐恢复到原来的大小。*/
+  transition: scale .3s;
+
+  //让鼠标悬浮有感觉
+  &:hover {
+    scale: 1.015;  //放大1.01倍
+    cursor: pointer;  //鼠标指针悬停
+  }
+
+
+  .topic-content{
+    font-size: 13px;
+    color: gray;
+    margin: 5px 0;
+    //设置话题内容只展示部分（3行）
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .topic-type{
+    display: inline-block;
+    border: solid 0.5px gray;
+    border-radius: 3px;
+    font-size: 12px;
+    padding: 0 5px;
+    height: 18px;
+    margin-right: 7px;
+  }
+
+  .topic-image{
+    width: 100%;
+    height: 100%;
+    max-height: 110px;
+    border-radius: 5px;
+  }
+
+}
+
 .info-text {
   display: flex;
   justify-content: space-between;

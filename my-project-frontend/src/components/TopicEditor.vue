@@ -9,6 +9,7 @@ import axios from "axios";
 import {ElMessage} from "element-plus";
 import {accessHeader, get, post} from "@/net";
 import ColorDot from "@/components/ColorDot.vue";
+import {useStore} from "@/store";
 
 // import {Check, Document} from "@element-plus/icons-vue";
 // import {computed, reactive, ref} from "vue";
@@ -21,6 +22,8 @@ import ColorDot from "@/components/ColorDot.vue";
 // import {ElMessage} from "element-plus";
 // import ColorDot from "@/components/ColorDot.vue";
 // import {useStore} from "@/store";
+
+const store = useStore()
 
 defineProps({
   show: Boolean
@@ -37,7 +40,6 @@ const editor = reactive({
   title: '',
   text: '',
   loading: false,
-  types: []
 })
 
 //重置发文
@@ -104,8 +106,8 @@ function submitTopic() {
   })
 }
 
-//返回后端获取到的数据
-get('/api/forum/types', data => editor.types = data)
+//返回后端获取到的数据，后更改types位置，弃用
+//get('/api/forum/types', data => editor.types = data)
 
 Quill.register('modules/imageResize', ImageResize)
 Quill.register('modules/ImageExtend', ImageExtend)
@@ -185,8 +187,8 @@ const editorOption = {
         <div style="width: 120px">
           <!--先判断有没有获取到数据库里面的types，没有的话就不能使用 -->
           <el-select placeholder="选择主题类型..." value-key="id" v-model="editor.type"
-                     :disabled="!editor.types.length">
-            <el-option v-for="item in editor.types" :value="item">
+                     :disabled="!store.forum.types.length">
+            <el-option v-for="item in store.forum.types" :value="item">
               <div>
                 <color-dot :color="item.color"/>
                 <span style="margin-left: 10px">{{ item.name }}</span>
