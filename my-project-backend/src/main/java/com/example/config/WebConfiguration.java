@@ -1,6 +1,7 @@
 package com.example.config;
 
-import jakarta.annotation.Resource;
+import com.baomidou.mybatisplus.annotation.DbType;
+import com.baomidou.mybatisplus.extension.plugins.inner.PaginationInnerInterceptor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -22,6 +23,14 @@ public class WebConfiguration implements WebMvcConfigurer {
     @Bean//发送http请求
     public RestTemplate restTemplate(){
         return new RestTemplate();
+    }
+
+    //分页查询配置
+    @Bean
+    public PaginationInnerInterceptor paginationInterceptor(){
+        PaginationInnerInterceptor paginationInterceptor = new PaginationInnerInterceptor(DbType.MYSQL);
+        paginationInterceptor.setMaxLimit(100L);
+        return paginationInterceptor;
     }
 
 }

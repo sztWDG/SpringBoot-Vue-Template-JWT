@@ -17,7 +17,8 @@ public class Topic {
     Integer type;
     Date time;
     Integer uid;
-    String username;
-    String avatar;
+    //删除用户相关信息，帖子只查询帖子信息
+//    String username;
+//    String avatar;
 
 }
