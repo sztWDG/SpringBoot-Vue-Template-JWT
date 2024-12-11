@@ -188,7 +188,8 @@ const editorOption = {
           <!--先判断有没有获取到数据库里面的types，没有的话就不能使用 -->
           <el-select placeholder="选择主题类型..." value-key="id" v-model="editor.type"
                      :disabled="!store.forum.types.length">
-            <el-option v-for="item in store.forum.types" :value="item">
+            <!--BUG:这里要加一个filter，让type大于0 -->
+            <el-option v-for="item in store.forum.types.filter(type => type.id >0)" :value="item">
               <div>
                 <color-dot :color="item.color"/>
                 <span style="margin-left: 10px">{{ item.name }}</span>

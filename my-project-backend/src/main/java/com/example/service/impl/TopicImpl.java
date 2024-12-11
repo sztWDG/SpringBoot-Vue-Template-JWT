@@ -76,7 +76,7 @@ public class TopicImpl extends ServiceImpl<TopicMapper, Topic> implements TopicS
 
         if (this.save(topic)) {
             //保存之后全部清除
-            cacheUtils.deleteCache(Const.FORUM_TOPIC_PREVIEW_CACHE+"*");
+            cacheUtils.deleteCachePattern(Const.FORUM_TOPIC_PREVIEW_CACHE+"*");
             return null;
         } else {
             return "内部错误，请联系管理员！";
