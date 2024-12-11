@@ -4,6 +4,7 @@ import com.example.entity.RestBean;
 import com.example.entity.vo.request.TopicCreateVO;
 import com.example.entity.vo.request.WeatherVO;
 import com.example.entity.vo.response.TopicPreviewVO;
+import com.example.entity.vo.response.TopicTopVO;
 import com.example.entity.vo.response.TopicTypeVO;
 import com.example.service.TopicService;
 import com.example.service.WeatherService;
@@ -60,6 +61,12 @@ public class ForumController {
                                                     @RequestParam @Min(0) int type){
 
         return RestBean.success(topicService.listTopicByPage(page,type));
+    }
+
+    @GetMapping("/top-topic")
+    public RestBean<List<TopicTopVO>> topTopic(){
+        return RestBean.success(topicService.listTopTopics());
+
     }
 
 
