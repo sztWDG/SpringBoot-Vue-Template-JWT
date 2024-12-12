@@ -6,6 +6,7 @@ import com.example.entity.dto.Topic;
 import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Select;
 
 import java.util.List;
 
@@ -47,4 +48,14 @@ public interface TopicMapper extends BaseMapper<Topic> {
             </script>
             """)
     int deleteInteract(List<Interact> interacts, String type);
+
+    @Select("""
+            select count(*) from db_topic_interact_${type} where tid = #{tid}
+            """)
+    int interactCount(int tid, String type); //显示点赞数
+
+    @Select("""
+            select count(*) from db_topic_interact_${type} where tid = #{tid} and uid = #{uid}
+            """)
+    int userInteractCount(int tid, int uid, String type); //显示当前用户点赞情况
 }
