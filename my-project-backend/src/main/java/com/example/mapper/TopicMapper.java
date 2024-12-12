@@ -1,8 +1,13 @@
 package com.example.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.example.entity.dto.Interact;
 import com.example.entity.dto.Topic;
+import org.apache.ibatis.annotations.Delete;
+import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
+
+import java.util.List;
 
 @Mapper
 public interface TopicMapper extends BaseMapper<Topic> {
@@ -22,4 +27,24 @@ public interface TopicMapper extends BaseMapper<Topic> {
 //            """)
 //    List<Topic> topicListByType(int start, int type);
 
+    //mybatis动态sql #这边的ignore是不抛出异常，而是忽略此次操作
+    @Insert("""
+            <script>
+                insert ignore into db_topic_interact_${type} values
+                <foreach collection ="interacts" item="item" separator =",">
+                    (#{item.tid}, #{item.uid}, #{item.time})
+                </foreach>
+            </script>
+            """)
+    void addInteract(List<Interact> interacts, String type);
+
+    @Delete("""
+            <script>
+                delete from db_topic_interact_${type} where
+                <foreach collection="interacts" item="item" separator=" or ">
+                    (tid = #{item.tid} and uid = #{item.uid})
+                </foreach>
+            </script>
+            """)
+    int deleteInteract(List<Interact> interacts, String type);
 }

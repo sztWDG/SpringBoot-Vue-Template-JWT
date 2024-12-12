@@ -3,11 +3,13 @@ import {useRoute} from "vue-router";
 import {get} from "@/net";
 import axios from "axios";
 import {computed, reactive} from "vue";
-import {ArrowLeft, Female, Male} from "@element-plus/icons-vue";
+import {ArrowLeft, CircleCheck, Female, Male, Star} from "@element-plus/icons-vue";
 import { QuillDeltaToHtmlConverter } from 'quill-delta-to-html';
 import router from "@/router";
 import Card from "@/components/Card.vue";
 import TopicTag from "@/components/TopicTag.vue";
+import InteractButton from "@/components/InteractButton.vue";
+import {ElMessage} from "element-plus";
 
 const route = useRoute()
 
@@ -16,6 +18,8 @@ const tid = route.params.tid
 const topic = reactive({
   //基本数据和评论数据分开来获取
   data: null,
+  like: false,
+  collect: false,
   comments: []
 })
 
@@ -32,6 +36,16 @@ const content = computed(()=> {
 //   return converter.convert();
 // }
 
+function interact(type, message) {
+  //注意：这边使用！，因为初始状态为false
+  get(`/api/forum/interact?tid=${tid}&type=${type}&state=${!topic[type]}`, () => {
+    topic[type] = !topic[type];
+    if (topic[type])
+      ElMessage.success(`${message}成功！`);
+    else
+      ElMessage.success(`已取消${message}`);
+  })
+}
 
 </script>
 
@@ -85,6 +99,17 @@ const content = computed(()=> {
       <!-- 右侧 -->
       <div class="topic-main-right">
         <div class="topic-content" v-html="content"></div>
+        <div style="text-align: right;margin-top: 30px">
+          <interact-button name="点个赞吧"  check-name="已点赞" color="pink" :check="topic.like"
+                           @check="interact('like', '点赞')">
+            <el-icon><CircleCheck/></el-icon>
+          </interact-button>
+          <interact-button name="收藏本帖" check-name="已收藏" color="orange" :check="topic.collect"
+                           @check="interact('collect', '收藏')"
+                           style="margin-left: 20px">
+            <el-icon><Star/></el-icon>
+          </interact-button>
+        </div>
       </div>
     </div>
 

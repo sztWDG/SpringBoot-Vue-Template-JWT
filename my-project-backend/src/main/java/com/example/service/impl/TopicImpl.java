@@ -18,9 +18,13 @@ import com.example.utils.FlowUtils;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.Resource;
 import org.springframework.beans.BeanUtils;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Service
@@ -43,6 +47,9 @@ public class TopicImpl extends ServiceImpl<TopicMapper, Topic> implements TopicS
 
     @Resource
     AccountPrivacyMapper accountPrivacyMapper;
+
+    @Resource
+    StringRedisTemplate RedisTemplate;
 
     //???判断所有合法typeID
     private Set<Integer> types = null;
@@ -85,7 +92,7 @@ public class TopicImpl extends ServiceImpl<TopicMapper, Topic> implements TopicS
 
         if (this.save(topic)) {
             //保存之后全部清除
-            cacheUtils.deleteCachePattern(Const.FORUM_TOPIC_PREVIEW_CACHE+"*");
+            cacheUtils.deleteCachePattern(Const.FORUM_TOPIC_PREVIEW_CACHE + "*");
             return null;
         } else {
             return "内部错误，请联系管理员！";
@@ -97,7 +104,7 @@ public class TopicImpl extends ServiceImpl<TopicMapper, Topic> implements TopicS
     public List<TopicPreviewVO> listTopicByPage(int pageNumber, int type) {
         //造一个key
         String key = Const.FORUM_TOPIC_PREVIEW_CACHE + pageNumber + ":" + type;
-        List<TopicPreviewVO> list = cacheUtils.takeListFromCache(key,TopicPreviewVO.class);
+        List<TopicPreviewVO> list = cacheUtils.takeListFromCache(key, TopicPreviewVO.class);
         //如果list不为空，则直接返回，为空则重新构造一次
         if (list != null) return list;
         //接收
@@ -109,13 +116,13 @@ public class TopicImpl extends ServiceImpl<TopicMapper, Topic> implements TopicS
             baseMapper.selectPage(page, Wrappers.<Topic>query().orderByDesc("time"));
         else
             //topics = baseMapper.topicListByType(page, type);
-            baseMapper.selectPage(page, Wrappers.<Topic>query().eq("type",type).orderByDesc("time"));
+            baseMapper.selectPage(page, Wrappers.<Topic>query().eq("type", type).orderByDesc("time"));
 
         List<Topic> topics = page.getRecords();
         if (topics.isEmpty()) return null;
         list = topics.stream().map(this::resolveToPreview).toList();
         //调用缓存工具类，对List类进行保存，过期时间给60秒
-        cacheUtils.savaListToCache(key,list,60);
+        cacheUtils.savaListToCache(key, list, 60);
         return list;
     }
 
@@ -139,17 +146,86 @@ public class TopicImpl extends ServiceImpl<TopicMapper, Topic> implements TopicS
         BeanUtils.copyProperties(topic, vo);
         TopicDetailVO.User user = new TopicDetailVO.User();
 
-        vo.setUser(this.fillUserDetailsByPrivacy(user,topic.getUid()));
+        vo.setUser(this.fillUserDetailsByPrivacy(user, topic.getUid()));
         return vo;
     }
 
-    private <T> T fillUserDetailsByPrivacy(T target, int uid){
+    /**
+     * 由于论坛交互数据（如点赞、收藏等）更新可能会非常频繁
+     * 更新信息实时到MYSQL不太现实，所以需要用Redis做换从并在合适的实际一次性入库一段时间的全部数据
+     * 当数据更新到来时，会创建一个新的定时任务，此任务会在一段时间后执行
+     * 将全部Redis暂时缓存的信息一次性加入到数据库，从而缓解MYSQL压力，如果
+     * 在定时任务已经设定期间又有新的更新到来，进更新Redis不创建新的演示任务
+     */
+    @Override
+    public void interact(Interact interact, boolean state) {
+        //思路：频繁交互的数据，需要做一个缓冲，否则对数据库的压力很大
+        String type = interact.getType();
+        synchronized (type.intern()) {
+            //不能直接存，而要存到哈希表里面，因为需要去重，相同的只留下一个数据 //这里的state要用Boolean封装一下
+            RedisTemplate.opsForHash().put(type, interact.toKey(), Boolean.toString(state));
+        }
+        //有的话，创建定时任务，否则不管
+        this.saveInteractSchedule(type);
+    }
+
+    /**
+     * //定时任务：定期保存
+     * 创建一个名为 state 的 Map，用于存储不同类型的状态，
+     * 键是 String 类型（代表不同的 type），
+     * 值是 Boolean 类型（表示该类型是否正在处理）。
+     */
+    private final Map<String, Boolean> state = new HashMap<>();
+    //创建一个调度线程池 service，最多可以同时运行两个任务。这个线程池可以用于定时执行任务。
+    ScheduledExecutorService service = Executors.newScheduledThreadPool(2);
+
+    private void saveInteractSchedule(String type) {
+        /*
+         检查 state 中是否已存在 type 这个键。
+         如果不存在，则返回 false。如果对应的值为 false，说明该类型的交互尚未在处理。
+         */
+        if (!state.getOrDefault(type, false)) {
+            //若没有开始任务，则设置其开始
+            state.put(type, true);
+            //开始之后，给一个定时任务
+            service.schedule(() -> {
+                //保存最终数据
+                this.saveInteract(type);
+                //保存之后，又设置为false
+                state.put(type, false);
+            }, 3, TimeUnit.SECONDS);
+        }
+    }
+
+    //保存数据成功之前，要保证不受影响，所以这里要加一把锁
+    private void saveInteract(String type) {
+        synchronized (type.intern()) {
+            //点赞的话，保存一条点赞记录，取消点赞则是从数据库删除该用户点赞数据
+            List<Interact> check = new LinkedList<>();
+            List<Interact> uncheck = new LinkedList<>();
+            RedisTemplate.opsForHash().entries(type).forEach((k, v) -> {
+                if (Boolean.parseBoolean(v.toString()))
+                    check.add(Interact.parseInteract(k.toString(), type));
+                else
+                    uncheck.add(Interact.parseInteract(k.toString(), type));
+            });
+            if (!check.isEmpty())
+                baseMapper.addInteract(check, type);
+            if (!uncheck.isEmpty())
+                baseMapper.deleteInteract(uncheck, type);
+
+            RedisTemplate.delete(type);
+        }
+
+    }
+
+    private <T> T fillUserDetailsByPrivacy(T target, int uid) {
         AccountDetails accountDetails = accountDetailsMapper.selectById(uid);
         Account account = accountMapper.selectById(uid);
         AccountPrivacy accountPrivacy = accountPrivacyMapper.selectById(uid);
         String[] ignores = accountPrivacy.hiddenFields();
-        BeanUtils.copyProperties(account,target,ignores);
-        BeanUtils.copyProperties(accountDetails,target,ignores);
+        BeanUtils.copyProperties(account, target, ignores);
+        BeanUtils.copyProperties(accountDetails, target, ignores);
 
         return target;
     }
