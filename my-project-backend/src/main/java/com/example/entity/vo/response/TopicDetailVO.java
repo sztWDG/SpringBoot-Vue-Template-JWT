@@ -19,7 +19,8 @@ public class TopicDetailVO {
         String username;
         String avatar;
         String description;
-        boolean gender;
+        //要用Integer不能用Boolean
+        Integer gender;
         String qq;
         String wx;
         String phone;
