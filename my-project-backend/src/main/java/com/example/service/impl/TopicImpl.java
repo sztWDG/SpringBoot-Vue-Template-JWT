@@ -170,20 +170,34 @@ public class TopicImpl extends ServiceImpl<TopicMapper, Topic> implements TopicS
             BeanUtils.copyProperties(dto, vo);
             //如果这里的quote不为0，说明有引用评论
             if (dto.getQuote() > 0) {
-                JSONObject object = JSONObject.parseObject(commentMapper
-                        .selectOne(Wrappers.<TopicComment>query().eq("id", dto.getId()).orderByAsc("time"))
-                        .getContent());
-
-                StringBuilder builder = new StringBuilder();
-                //这边 ignore - > {} 为不处理
-                this.shortContent(object.getJSONArray("ops"),builder, ignore -> {});
-                vo.setQuote(builder.toString());
+                TopicComment comment = commentMapper
+                        .selectOne(Wrappers.<TopicComment>query()
+                                .eq("id", dto.getQuote())
+                                .orderByAsc("time"));
+                //判断如果comment若没查出,需要将quote设为“此评论已被删除”
+                if (comment != null) {
+                    JSONObject object = JSONObject.parseObject(comment.getContent());
+                    StringBuilder builder = new StringBuilder();
+                    //这边 ignore - > {} 为不处理
+                    this.shortContent(object.getJSONArray("ops"), builder, ignore -> {
+                    });
+                    vo.setQuote(builder.toString());
+                } else {
+                    vo.setQuote("此评论已被删除");
+                }
             }
             CommentVO.User user = new CommentVO.User();
             this.fillUserDetailsByPrivacy(user, dto.getUid());
             vo.setUser(user);
             return vo;
         }).toList();
+    }
+
+    //只有帖子主人可以删除
+    @Override
+    public void deleteComment(int id, int uid) {
+        commentMapper.delete(Wrappers.<TopicComment>query()
+                .eq("id", id).eq("uid", uid));
     }
 
     @Override
@@ -361,7 +375,7 @@ public class TopicImpl extends ServiceImpl<TopicMapper, Topic> implements TopicS
         StringBuilder previewText = new StringBuilder();
         JSONArray ops = JSONObject.parseObject(topic.getContent()).getJSONArray("ops");
 
-        this.shortContent(ops,previewText,obj -> images.add(obj.toString()));
+        this.shortContent(ops, previewText, obj -> images.add(obj.toString()));
 
         vo.setText(previewText.length() > 300
                 ? previewText.substring(0, 300)
