@@ -9,6 +9,7 @@ import com.example.entity.dto.*;
 import com.example.entity.vo.request.AddCommentVO;
 import com.example.entity.vo.request.TopicCreateVO;
 import com.example.entity.vo.request.TopicUpdateVO;
+import com.example.entity.vo.response.CommentVO;
 import com.example.entity.vo.response.TopicDetailVO;
 import com.example.entity.vo.response.TopicPreviewVO;
 import com.example.entity.vo.response.TopicTopVO;
@@ -27,6 +28,7 @@ import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 @Service
@@ -77,7 +79,7 @@ public class TopicImpl extends ServiceImpl<TopicMapper, Topic> implements TopicS
     @Override
     public String createTopic(int uid, TopicCreateVO vo) {
 
-        if (!textLimitCheck(vo.getContent(),20000))
+        if (!textLimitCheck(vo.getContent(), 20000))
             return "文章内容字数超出限制，发文失败！";
         if (!types.contains(vo.getType()))
             return "文章类型非法！";
@@ -106,7 +108,7 @@ public class TopicImpl extends ServiceImpl<TopicMapper, Topic> implements TopicS
     @Override
     public String updateTopic(int uid, TopicUpdateVO vo) {
         //校验
-        if (!textLimitCheck(vo.getContent(),20000))
+        if (!textLimitCheck(vo.getContent(), 20000))
             return "文章内容字数超出限制，发文失败！";
         if (!types.contains(vo.getType()))
             return "文章类型非法！";
@@ -124,11 +126,11 @@ public class TopicImpl extends ServiceImpl<TopicMapper, Topic> implements TopicS
     //评论楼中楼来了！
     @Override
     public String createComment(int uid, AddCommentVO vo) {
-        if(!textLimitCheck(JSONObject.parseObject(vo.getContent()), 2000))
+        if (!textLimitCheck(JSONObject.parseObject(vo.getContent()), 2000))
             return "评论内容太多，发表失败！";
         String key = Const.FORUM_TOPIC_COMMENT_COUNTER + uid;
         //评论需要限制一分钟只能发两次
-        if(!flowUtils.limitPeriodCounterCheck(key, 2, 60))
+        if (!flowUtils.limitPeriodCounterCheck(key, 2, 60))
             return "发表评论频繁，请稍后再试！";
         //创建一个评论对象,准备进行操作
         TopicComment comment = new TopicComment();
@@ -136,7 +138,6 @@ public class TopicImpl extends ServiceImpl<TopicMapper, Topic> implements TopicS
         BeanUtils.copyProperties(vo, comment);
         comment.setTime(new Date());
         commentMapper.insert(comment);
-
 //        Topic topic = baseMapper.selectById(vo.getTid());
 //        Account account = accountMapper.selectById(uid);
 //        if(vo.getQuote() > 0) {
@@ -161,6 +162,31 @@ public class TopicImpl extends ServiceImpl<TopicMapper, Topic> implements TopicS
     }
 
     @Override
+    public List<CommentVO> comments(int tid, int pageNumber) {
+        Page<TopicComment> page = Page.of(pageNumber, 10);
+        commentMapper.selectPage(page, Wrappers.<TopicComment>query().eq("tid", tid));
+        return page.getRecords().stream().map(dto -> {
+            CommentVO vo = new CommentVO();
+            BeanUtils.copyProperties(dto, vo);
+            //如果这里的quote不为0，说明有引用评论
+            if (dto.getQuote() > 0) {
+                JSONObject object = JSONObject.parseObject(commentMapper
+                        .selectOne(Wrappers.<TopicComment>query().eq("id", dto.getId()).orderByAsc("time"))
+                        .getContent());
+
+                StringBuilder builder = new StringBuilder();
+                //这边 ignore - > {} 为不处理
+                this.shortContent(object.getJSONArray("ops"),builder, ignore -> {});
+                vo.setQuote(builder.toString());
+            }
+            CommentVO.User user = new CommentVO.User();
+            this.fillUserDetailsByPrivacy(user, dto.getUid());
+            vo.setUser(user);
+            return vo;
+        }).toList();
+    }
+
+    @Override
     public List<TopicPreviewVO> listTopicCollects(int uid) {
         return baseMapper.collectTopics(uid)
                 .stream()
@@ -168,7 +194,7 @@ public class TopicImpl extends ServiceImpl<TopicMapper, Topic> implements TopicS
                     TopicPreviewVO vo = new TopicPreviewVO();
                     BeanUtils.copyProperties(topic, vo);
                     return vo;
-        })
+                })
                 .toList();
     }
 
@@ -223,9 +249,9 @@ public class TopicImpl extends ServiceImpl<TopicMapper, Topic> implements TopicS
                 hasInteract(tid, uid, "collect")
         );
         vo.setInteract(interact);
-
         TopicDetailVO.User user = new TopicDetailVO.User();
         vo.setUser(this.fillUserDetailsByPrivacy(user, topic.getUid()));
+        vo.setComments(commentMapper.selectCount(Wrappers.<TopicComment>query().eq("tid", tid)));
         return vo;
     }
 
@@ -334,6 +360,18 @@ public class TopicImpl extends ServiceImpl<TopicMapper, Topic> implements TopicS
         List<String> images = new ArrayList<>();
         StringBuilder previewText = new StringBuilder();
         JSONArray ops = JSONObject.parseObject(topic.getContent()).getJSONArray("ops");
+
+        this.shortContent(ops,previewText,obj -> images.add(obj.toString()));
+
+        vo.setText(previewText.length() > 300
+                ? previewText.substring(0, 300)
+                : previewText.toString());
+        vo.setImages(images);
+        return vo;
+    }
+
+    private void shortContent(JSONArray ops, StringBuilder previewText, Consumer<Object> imageHandler) {
+
         for (Object op : ops) {
             Object insert = JSONObject.from(op).get("insert");
             //判断insert是不是普通的字符串（文本）
@@ -342,20 +380,17 @@ public class TopicImpl extends ServiceImpl<TopicMapper, Topic> implements TopicS
                 previewText.append(text);
             } else if (insert instanceof Map<?, ?> map) {
                 //！！！认真学习优雅的写法
-                Optional.ofNullable(map.get("image"))
-                        //Lambda表达式
-                        /*
-                         * 1. obj ->：这是 lambda 表达式的参数部分，表示传入了一个名为 obj 的变量。
-                         * 2. images.add(obj.toString())：这是 lambda 表达式的函数体部分，
-                         * 表示对参数 obj 调用 toString() 方法，将其字符串表示形式添加到集合 images 中。*/
-                        .ifPresent(obj -> images.add(obj.toString()));
+                //Lambda表达式
+                /*
+                 * 1. obj ->：这是 lambda 表达式的参数部分，表示传入了一个名为 obj 的变量。
+                 * 2. images.add(obj.toString())：这是 lambda 表达式的函数体部分，
+                 * 表示对参数 obj 调用 toString() 方法，将其字符串表示形式添加到集合 images 中。
+                 * .ifPresent(obj -> images.add(obj.toString()));
+                 * */
+                Optional.ofNullable(map.get("image")).ifPresent(imageHandler);
+
             }
         }
-        vo.setText(previewText.length() > 300
-                ? previewText.substring(0, 300)
-                : previewText.toString());
-        vo.setImages(images);
-        return vo;
     }
 
     //校验content

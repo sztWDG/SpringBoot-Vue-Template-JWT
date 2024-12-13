@@ -6,10 +6,7 @@ import com.example.entity.vo.request.AddCommentVO;
 import com.example.entity.vo.request.TopicCreateVO;
 import com.example.entity.vo.request.TopicUpdateVO;
 import com.example.entity.vo.request.WeatherVO;
-import com.example.entity.vo.response.TopicDetailVO;
-import com.example.entity.vo.response.TopicPreviewVO;
-import com.example.entity.vo.response.TopicTopVO;
-import com.example.entity.vo.response.TopicTypeVO;
+import com.example.entity.vo.response.*;
 import com.example.service.TopicService;
 import com.example.service.WeatherService;
 import com.example.utils.Const;
@@ -106,7 +103,15 @@ public class ForumController {
     @PostMapping("/add-comment")
     public RestBean<Void> addComment(@Valid @RequestBody AddCommentVO vo,
                                      @RequestAttribute(Const.ATTR_USER_ID) int id) {
-
         return utils.messageHandle(() -> topicService.createComment(id, vo));
     }
+
+    @GetMapping("/comments")
+    public RestBean<List<CommentVO>> comments(@RequestParam @Min(0) int tid,
+                                              @RequestParam @Min(0) int page) {
+        //由于前面把page值设置为0，这边要加上一
+        return RestBean.success(topicService.comments(tid, page+1));
+    }
+
+
 }

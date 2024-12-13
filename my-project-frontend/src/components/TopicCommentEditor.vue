@@ -28,7 +28,7 @@ function submitComment() {
     content: JSON.stringify(content.value)
   }, () => {
     ElMessage.success('发表评论成功')
-    emit('close')
+    emit('comment')
   })
 }
 
@@ -50,7 +50,7 @@ function submitComment() {
 <template>
   <div>
     <el-drawer :model-value="show"
-               title="发表评论"
+               title="发表评论" @opened="init"
                @open="init" @close="emit('close')"
                direction="btt" :size="270"
                :close-on-click-modal="false">
