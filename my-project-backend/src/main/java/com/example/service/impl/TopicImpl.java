@@ -97,7 +97,18 @@ public class TopicImpl extends ServiceImpl<TopicMapper, Topic> implements TopicS
         } else {
             return "内部错误，请联系管理员！";
         }
+    }
 
+    @Override
+    public List<TopicPreviewVO> listTopicCollects(int uid) {
+        return baseMapper.collectTopics(uid)
+                .stream()
+                .map(topic -> {
+                    TopicPreviewVO vo = new TopicPreviewVO();
+                    BeanUtils.copyProperties(topic, vo);
+                    return vo;
+        })
+                .toList();
     }
 
     @Override
@@ -174,6 +185,7 @@ public class TopicImpl extends ServiceImpl<TopicMapper, Topic> implements TopicS
         //有的话，创建定时任务，否则不管
         this.saveInteractSchedule(type);
     }
+
 
     /**
      * 清除缓存，干净

@@ -2,13 +2,14 @@
 
 import LightCard from "@/components/LightCard.vue";
 import {
+  ArrowRightBold,
   Calendar, CircleCheck,
   Clock,
   CollectionTag,
   Compass,
   Document,
   Edit,
-  EditPen,
+  EditPen, FolderOpened,
   Link,
   Microphone, Picture, Star
 } from "@element-plus/icons-vue";
@@ -22,6 +23,7 @@ import axios from "axios";
 import ColorDot from "@/components/ColorDot.vue";
 import router from "@/router";
 import TopicTag from "@/components/TopicTag.vue";
+import TopicCollectList from "@/components/TopicCollectList.vue";
 
 const store = useStore()
 
@@ -41,6 +43,9 @@ const topics = reactive({
   end: false,
 
 })
+
+const collects = ref(false);
+
 // const list = ref(null)
 // const type = ref(0)
 
@@ -224,7 +229,15 @@ navigator.geolocation.getCurrentPosition(position => {
     <!--右侧 -->
     <div style="width: 280px">
       <div style="position: sticky;top: 20px">
+        <!--收藏查看 -->
         <light-card>
+          <div class="collect-list-button" @click="collects=true">
+            <span><el-icon><FolderOpened/></el-icon>查看我的收藏</span>
+            <el-icon style="transform: translateY(3px)"><ArrowRightBold/></el-icon>
+          </div>
+        </light-card>
+
+        <light-card style="margin-top: 10px">
           <div style="font-weight: bold">
             <el-icon>
               <CollectionTag/>
@@ -284,11 +297,26 @@ navigator.geolocation.getCurrentPosition(position => {
     <!--话题编辑 发文成功，要关闭编辑框。 关闭编辑框，要关闭编辑框-->
     <!--updateList()获取帖子列表，在发帖成功后也调用一次,以便刷新展示-->
     <topic-editor :show="editor" @success=onTopicCreate @close="editor = false"/>
+    <!--收藏-->
+    <topic-collect-list :show="collects" @close="collects=false"/>
   </div>
 
 </template>
 
 <style lang="less" scoped>
+
+.collect-list-button {
+  font-size: 14px;
+  display: flex;
+  justify-content: space-between;
+  transition: .3s;
+
+  &:hover {
+    cursor: pointer;
+    opacity: 0.6;
+  }
+}
+
 //置顶样式
 .top-topic {
   display: flex;
