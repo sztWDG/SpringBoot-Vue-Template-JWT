@@ -3,6 +3,7 @@ package com.example.controller;
 import com.example.entity.RestBean;
 import com.example.entity.dto.Interact;
 import com.example.entity.vo.request.TopicCreateVO;
+import com.example.entity.vo.request.TopicUpdateVO;
 import com.example.entity.vo.request.WeatherVO;
 import com.example.entity.vo.response.TopicDetailVO;
 import com.example.entity.vo.response.TopicPreviewVO;
@@ -73,8 +74,9 @@ public class ForumController {
     }
 
     @GetMapping("/topic")
-    public RestBean<TopicDetailVO> topic(@RequestParam @Min(0) int tid) {
-        return RestBean.success(topicService.getTopic(tid));
+    public RestBean<TopicDetailVO> topic(@RequestParam @Min(0) int tid,
+                                         @RequestAttribute(Const.ATTR_USER_ID) int id) {
+        return RestBean.success(topicService.getTopic(tid, id));
     }
 
     //点赞收藏等，统一设置为交互接口
@@ -87,11 +89,17 @@ public class ForumController {
         return RestBean.success();
     }
 
-   @GetMapping("/collects")
-   public RestBean<List<TopicPreviewVO>> collects(@RequestAttribute(Const.ATTR_USER_ID) int id) {
+    @GetMapping("/collects")
+    public RestBean<List<TopicPreviewVO>> collects(@RequestAttribute(Const.ATTR_USER_ID) int id) {
 
         return RestBean.success(topicService.listTopicCollects(id));
-   }
+    }
 
+    //修改帖子
+    @PostMapping("/update-topic")
+    public RestBean<Void> updateTopic(@Valid @RequestBody TopicUpdateVO vo,
+                                      @RequestAttribute(Const.ATTR_USER_ID) int id) {
+        return utils.messageHandle(() -> topicService.updateTopic(id, vo));
+    }
 
 }

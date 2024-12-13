@@ -1,7 +1,7 @@
 <script setup>
 import {Check, Document} from "@element-plus/icons-vue";
 import {computed, reactive, ref} from "vue";
-import {Quill, QuillEditor} from "@vueup/vue-quill";
+import {Delta, Quill, QuillEditor} from "@vueup/vue-quill";
 import ImageResize from "quill-image-resize-vue";
 import {ImageExtend, QuillWatch} from "quill-image-super-solution-module";
 import '@vueup/vue-quill/dist/vue-quill.snow.css'
@@ -25,8 +25,38 @@ import {useStore} from "@/store";
 
 const store = useStore()
 
-defineProps({
-  show: Boolean
+const props = defineProps({
+  show: Boolean,
+  defaultTitle: {
+    default: '',
+    type: String
+  },
+  defaultText: {
+    default: '',
+    type: String
+  },
+  defaultType: {
+    default: null,
+    type: Number
+  },
+  submitButton: {
+    default: '立即发表主题',
+    type: String
+  },
+  submit: {
+    //默认就是之前的发帖样式
+    default: (editor, success) => {
+      post('/api/forum/create-topic', {
+        type: editor.type.id,
+        title: editor.title,
+        content: editor.text
+      }, () => {
+        ElMessage.success("帖子发表成功！")
+        success()
+      })
+    },
+    type: Function
+  }
 })
 
 const refEditor = ref()
@@ -44,9 +74,14 @@ const editor = reactive({
 
 //重置发文
 function initEditor() {
-  refEditor.value.setContents('', 'user');
-  editor.title = '';
-  editor.type = null
+  if (props.defaultText)
+    //如果一开始得到的text非空，说明是再次编辑，对text文本进行解析，并且展示
+    editor.text = new Delta(JSON.parse(props.defaultText))
+  else
+    //若text为空，说明是初始帖子发表状态
+    refEditor.value.setContents('', 'user');
+  editor.title = props.defaultTitle;
+  editor.type = findTypeById(props.defaultType);
 }
 
 //迁移到数据库
@@ -76,6 +111,13 @@ function deltaToText(delta) {
 
 const contentLength = computed(() => deltaToText(editor.text).length)
 
+//通过typeID显示type的名称
+function findTypeById(id){
+  for (let type of store.forum.types) {
+    if(type.id === id)
+      return type
+  }
+}
 
 function submitTopic() {
   // console.info(editor.text);
@@ -94,16 +136,7 @@ function submitTopic() {
     ElMessage.warning('请选择一个合适的帖子类型！');
     return;
   }
-//检测没问题，直接发数据
-  post('/api/forum/create-Topic', {
-    type: editor.type.id,
-    title: editor.title,
-    content: editor.text
-  }, () => {
-    ElMessage.success('帖子发表成功！')
-    //给外界发送一个success状态
-    emit('success')
-  })
+  props.submit(editor, () => emit('success'))
 }
 
 //返回后端获取到的数据，后更改types位置，弃用
@@ -189,7 +222,8 @@ const editorOption = {
           <el-select placeholder="选择主题类型..." value-key="id" v-model="editor.type"
                      :disabled="!store.forum.types.length">
             <!--BUG:这里要加一个filter，让type大于0 -->
-            <el-option v-for="item in store.forum.types.filter(type => type.id >0)" :value="item">
+            <el-option v-for="item in store.forum.types.filter(type => type.id > 0)"
+                       :value="item" :label="item.name">
               <div>
                 <color-dot :color="item.color"/>
                 <span style="margin-left: 10px">{{ item.name }}</span>
@@ -227,7 +261,7 @@ const editorOption = {
           当前字数 {{ contentLength }}（最大支持20000字）
         </div>
         <div>
-          <el-button type="success" @click="submitTopic" :icon="Check" plain>立即发表主题</el-button>
+          <el-button type="success" @click="submitTopic" :icon="Check" plain>{{submitButton}}</el-button>
         </div>
       </div>
 

@@ -1,18 +1,20 @@
 <script setup>
 import {useRoute} from "vue-router";
-import {get} from "@/net";
+import {get, post} from "@/net";
 import axios from "axios";
-import {computed, reactive} from "vue";
-import {ArrowLeft, CircleCheck, Female, Male, Star} from "@element-plus/icons-vue";
+import {computed, reactive, ref} from "vue";
+import {ArrowLeft, CircleCheck, EditPen, Female, Male, Star} from "@element-plus/icons-vue";
 import { QuillDeltaToHtmlConverter } from 'quill-delta-to-html';
 import router from "@/router";
 import Card from "@/components/Card.vue";
 import TopicTag from "@/components/TopicTag.vue";
 import InteractButton from "@/components/InteractButton.vue";
 import {ElMessage} from "element-plus";
+import {useStore} from "@/store";
+import TopicEditor from "@/components/TopicEditor.vue";
 
 const route = useRoute()
-
+const store = useStore()
 const tid = route.params.tid
 
 const topic = reactive({
@@ -23,11 +25,15 @@ const topic = reactive({
   comments: []
 })
 
-get(`api/forum/topic?tid=${tid}`, data => {
+const edit = ref(false)
+
+const init = () => get(`api/forum/topic?tid=${tid}`, data => {
   topic.data = data
   topic.like = data.interact.like
   topic.collect = data.interact.collect
 })
+
+init()
 
 const content = computed(()=> {
   const ops = JSON.parse(topic.data.content).ops
@@ -51,6 +57,36 @@ function interact(type, message) {
   })
 }
 
+function updateTopic(editor) {
+  post('/api/forum/update-topic', {
+    id: tid,
+    type: editor.type.id,
+    title: editor.title,
+    content: editor.text
+  }, () => {
+    ElMessage.success('帖子内容更新成功！')
+    edit.value = false
+    init()
+  })
+}
+
+function loadComments(page) {
+  topic.comments = null
+  topic.page = page
+  get(`/api/forum/comments?tid=${tid}&page=${page - 1}`, data => topic.comments = data)
+}
+
+function onCommentAdd() {
+  comment.show = false
+  loadComments(Math.floor(++topic.data.comments / 10) + 1)
+}
+
+function deleteComment(id) {
+  get(`/api/forum/delete-comment?id=${id}`, () => {
+    ElMessage.success('删除评论成功！')
+    loadComments(topic.page)
+  })
+}
 </script>
 
 <template>
@@ -103,29 +139,34 @@ function interact(type, message) {
       <!-- 右侧 -->
       <div class="topic-main-right">
         <div class="topic-content" v-html="content"></div>
-
         <el-divider/>
         <div style="font-size: 13px;color: gray;text-align: center">
           <div>发帖时间：{{new Date(topic.data.time).toLocaleString()}}</div>
         </div>
 
         <div style="text-align: right;margin-top: 30px">
+          <interact-button name="编辑帖子"  color="dodgerblue" :check="false"
+                           @check="edit=true" style="margin-right: 15px"
+                           v-if="store.user.id === topic.data.user.id">
+            <el-icon><EditPen/></el-icon>
+          </interact-button>
           <interact-button name="点个赞吧"  check-name="已点赞" color="pink" :check="topic.like"
                            @check="interact('like', '点赞')">
             <el-icon><CircleCheck/></el-icon>
           </interact-button>
           <interact-button name="收藏本帖" check-name="已收藏" color="orange" :check="topic.collect"
                            @check="interact('collect', '收藏')"
-                           style="margin-left: 20px">
+                           style="margin-left: 15px">
             <el-icon><Star/></el-icon>
           </interact-button>
         </div>
       </div>
     </div>
 
-    <div>
-
-    </div>
+    <topic-editor :show="edit" @close="edit=false" v-if="topic.data && store.forum.types"
+                  :default-type="topic.data.type" :default-text="topic.data.content"
+                  :default-title="topic.data.title" submit-button="更新帖子内容"
+                  :submit="updateTopic"/>
   </div>
 
 </template>
@@ -161,11 +202,14 @@ function interact(type, message) {
   .topic-main-right {
     width: 600px;
     padding: 10px 20px;
+    display: flex;
+    flex-direction: column;
 
     .topic-content {
-      fonst-size: 14px;
+      font-size: 14px;
       line-height: 22px;
       opacity: 0.8;
+      flex: 1;
     }
   }
 }

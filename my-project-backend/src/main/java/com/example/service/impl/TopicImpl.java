@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.example.entity.dto.*;
 import com.example.entity.vo.request.TopicCreateVO;
+import com.example.entity.vo.request.TopicUpdateVO;
 import com.example.entity.vo.response.TopicDetailVO;
 import com.example.entity.vo.response.TopicPreviewVO;
 import com.example.entity.vo.response.TopicTopVO;
@@ -74,7 +75,6 @@ public class TopicImpl extends ServiceImpl<TopicMapper, Topic> implements TopicS
 
         if (!textLimitCheck(vo.getContent()))
             return "文章内容字数超出限制，发文失败！";
-
         if (!types.contains(vo.getType()))
             return "文章类型非法！";
 
@@ -97,6 +97,24 @@ public class TopicImpl extends ServiceImpl<TopicMapper, Topic> implements TopicS
         } else {
             return "内部错误，请联系管理员！";
         }
+    }
+
+    @Override
+    public String updateTopic(int uid, TopicUpdateVO vo) {
+        //校验
+        if (!textLimitCheck(vo.getContent()))
+            return "文章内容字数超出限制，发文失败！";
+        if (!types.contains(vo.getType()))
+            return "文章类型非法！";
+        //更新
+        baseMapper.update(null, Wrappers.<Topic>update()
+                .eq("uid", uid)
+                .eq("id", vo.getId())
+                .set("title", vo.getTitle())
+                .set("content", vo.getContent().toString())
+                .set("type", vo.getType())
+        );
+        return null;
     }
 
     @Override
@@ -151,14 +169,15 @@ public class TopicImpl extends ServiceImpl<TopicMapper, Topic> implements TopicS
     }
 
     @Override
-    public TopicDetailVO getTopic(int tid) {
+    public TopicDetailVO getTopic(int tid, int uid) {
         TopicDetailVO vo = new TopicDetailVO();
         Topic topic = baseMapper.selectById(tid);
         BeanUtils.copyProperties(topic, vo);
 
         TopicDetailVO.Interact interact = new TopicDetailVO.Interact(
-                hasInteract(tid, topic.getUid(), "like"),
-                hasInteract(tid, topic.getUid(), "collect")
+                //！这边有个问题，是获得当前用户ID而非帖子主人id
+                hasInteract(tid, uid, "like"),
+                hasInteract(tid, uid, "collect")
         );
         vo.setInteract(interact);
 
