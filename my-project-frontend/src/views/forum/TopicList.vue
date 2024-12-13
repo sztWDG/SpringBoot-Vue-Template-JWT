@@ -182,8 +182,9 @@ navigator.geolocation.getCurrentPosition(position => {
               <!--头像 -->
               <div style="display: flex">
                 <div>
-                  <!--获取！怎么做到的？-->
-                  <el-avatar :size="30" :src="`${axios.defaults.baseURL}/images${item.avatar}`"/>
+                  <!--获取！怎么做到的？  修改BUG，解决新人没有头像的问题-->
+            <!--  <el-avatar :size="30" :src="`${axios.defaults.baseURL}/images${item.avatar}`"/>-->
+                  <el-avatar :size="30" :src="store.avatarUserUrl(item.avatar)"/>
                 </div>
                 <!--transform:translatY(-2px)上移 -->
                 <div style="margin-left: 7px;transform: translateY(-2px) ">

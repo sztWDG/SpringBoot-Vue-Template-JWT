@@ -121,8 +121,7 @@ function deleteComment(id) {
     <div class="topic-main">
       <!-- 左侧 -->
       <div class="topic-main-left">
-        <el-avatar :src="axios.defaults.baseURL + '/images' + topic.data.user.avatar"
-                   :size="60"/>
+        <el-avatar :src="store.avatarUserUrl(topic.data.user.avatar)" :size="60"/>
         <div>
           <!--展示性别 -->
           <div style="font-size: 18px;font-weight: bold;">
@@ -184,8 +183,7 @@ function deleteComment(id) {
         <div class="topic-main" style="margin-top: 10px" v-for="item in topic.comments">
           <!-- 左侧 -->
           <div class="topic-main-left">
-            <el-avatar :src="axios.defaults.baseURL + '/images' + item.user.avatar"
-                       :size="60"/>
+            <el-avatar :src="store.avatarUserUrl(item.user.avatar)"  :size="60"/>
             <div>
               <!--展示性别 -->
               <div style="font-size: 18px;font-weight: bold;">
