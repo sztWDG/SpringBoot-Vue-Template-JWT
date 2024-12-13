@@ -236,15 +236,15 @@ function userLogout() {
         </el-aside>
 
         <el-main class="main-content-page" style="padding: 0">
-          <el-scrollbar style="height: calc(100vh - 55px)">
-<!--            <router-view v-slot="{ Component }">-->
-<!--              <transition name="el-fade-in-linear" mode="out-in">-->
-<!--                <component :is="Component" :key="Component.key" style="height: 100%"/>-->
-<!--              </transition>-->
-<!--            </router-view>-->
-            <router-view>
-            </router-view>
-          </el-scrollbar>
+            <el-scrollbar style="height: calc(100vh - 55px)">
+<!--             <router-view v-slot="{ Component }">-->
+<!--               <transition name="el-fade-in-linear" mode="out-in">-->
+<!--                 <component :is="Component" :key="Component.key" style="height: 100%"/>-->
+<!--               </transition>-->
+<!--             </router-view>-->
+              <router-view>
+              </router-view>
+            </el-scrollbar>
         </el-main>
       </el-container>
     </el-container>

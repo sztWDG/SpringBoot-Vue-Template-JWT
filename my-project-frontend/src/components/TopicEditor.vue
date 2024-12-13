@@ -103,9 +103,7 @@ function deltaToText(delta) {
     //过滤掉换行等字符
     return str.replace(/\s/g, "")
   }
-
   for (let op of delta.ops) {
-
   }
 }
 
@@ -282,23 +280,4 @@ const editorOption = {
   margin: 0;
 }
 
-:deep(.ql-toolbar) {
-  border-radius: 5px 5px 0 0;
-  border-color: var(--el-border-color);
-}
-
-:deep(.ql-container) {
-  border-radius: 0 0 5px 5px;
-  border-color: var(--el-border-color);
-}
-
-:deep(.ql-editor) {
-  font-size: 16px;
-}
-
-:deep(.ql-editor.ql-blank::before) {
-  /*！！！*/
-  color: var(--el-text-color-placeholder);
-  font-style: normal;
-}
 </style>

@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.example.entity.dto.*;
+import com.example.entity.vo.request.AddCommentVO;
 import com.example.entity.vo.request.TopicCreateVO;
 import com.example.entity.vo.request.TopicUpdateVO;
 import com.example.entity.vo.response.TopicDetailVO;
@@ -50,6 +51,9 @@ public class TopicImpl extends ServiceImpl<TopicMapper, Topic> implements TopicS
     AccountPrivacyMapper accountPrivacyMapper;
 
     @Resource
+    TopicCommentMapper commentMapper;
+
+    @Resource
     StringRedisTemplate RedisTemplate;
 
     //???判断所有合法typeID
@@ -73,7 +77,7 @@ public class TopicImpl extends ServiceImpl<TopicMapper, Topic> implements TopicS
     @Override
     public String createTopic(int uid, TopicCreateVO vo) {
 
-        if (!textLimitCheck(vo.getContent()))
+        if (!textLimitCheck(vo.getContent(),20000))
             return "文章内容字数超出限制，发文失败！";
         if (!types.contains(vo.getType()))
             return "文章类型非法！";
@@ -102,7 +106,7 @@ public class TopicImpl extends ServiceImpl<TopicMapper, Topic> implements TopicS
     @Override
     public String updateTopic(int uid, TopicUpdateVO vo) {
         //校验
-        if (!textLimitCheck(vo.getContent()))
+        if (!textLimitCheck(vo.getContent(),20000))
             return "文章内容字数超出限制，发文失败！";
         if (!types.contains(vo.getType()))
             return "文章类型非法！";
@@ -114,6 +118,45 @@ public class TopicImpl extends ServiceImpl<TopicMapper, Topic> implements TopicS
                 .set("content", vo.getContent().toString())
                 .set("type", vo.getType())
         );
+        return null;
+    }
+
+    //评论楼中楼来了！
+    @Override
+    public String createComment(int uid, AddCommentVO vo) {
+        if(!textLimitCheck(JSONObject.parseObject(vo.getContent()), 2000))
+            return "评论内容太多，发表失败！";
+        String key = Const.FORUM_TOPIC_COMMENT_COUNTER + uid;
+        //评论需要限制一分钟只能发两次
+        if(!flowUtils.limitPeriodCounterCheck(key, 2, 60))
+            return "发表评论频繁，请稍后再试！";
+        //创建一个评论对象,准备进行操作
+        TopicComment comment = new TopicComment();
+        comment.setUid(uid);
+        BeanUtils.copyProperties(vo, comment);
+        comment.setTime(new Date());
+        commentMapper.insert(comment);
+
+//        Topic topic = baseMapper.selectById(vo.getTid());
+//        Account account = accountMapper.selectById(uid);
+//        if(vo.getQuote() > 0) {
+//            TopicComment com = commentMapper.selectById(vo.getQuote());
+//            if(!Objects.equals(account.getId(), com.getUid())) {
+//                notificationService.addNotification(
+//                        com.getUid(),
+//                        "您有新的帖子评论回复",
+//                        account.getUsername()+" 回复了你发表的评论，快去看看吧！",
+//                        "success", "/index/topic-detail/"+com.getTid()
+//                );
+//            }
+//        } else if (!Objects.equals(account.getId(), topic.getUid())) {
+//            notificationService.addNotification(
+//                    topic.getUid(),
+//                    "您有新的帖子回复",
+//                    account.getUsername()+" 回复了你发表主题: "+topic.getTitle()+"，快去看看吧！",
+//                    "success", "/index/topic-detail/"+topic.getId()
+//            );
+//        }
         return null;
     }
 
@@ -316,13 +359,13 @@ public class TopicImpl extends ServiceImpl<TopicMapper, Topic> implements TopicS
     }
 
     //校验content
-    private boolean textLimitCheck(JSONObject object) {
+    private boolean textLimitCheck(JSONObject object, int max) {
         if (object == null) return false;
         //字数统计
         long length = 0;
         for (Object op : object.getJSONArray("ops")) {
             length += JSONObject.from(op).getString("insert").length();
-            if (length > 20000) return false;
+            if (length > max) return false;
         }
         return true;
     }

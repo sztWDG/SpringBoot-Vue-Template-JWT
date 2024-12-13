@@ -137,7 +137,7 @@ navigator.geolocation.getCurrentPosition(position => {
     <div style="flex: 1;">
       <light-card>
         <!--这边点击发表主题，单向绑定弹出编辑框 -->
-        <div class="create-topic" @click="edit = true">
+        <div class="create-topic" @click="editor = true">
           <el-icon>
             <EditPen/>
           </el-icon>
@@ -296,7 +296,7 @@ navigator.geolocation.getCurrentPosition(position => {
 
     <!--话题编辑 发文成功，要关闭编辑框。 关闭编辑框，要关闭编辑框-->
     <!--updateList()获取帖子列表，在发帖成功后也调用一次,以便刷新展示-->
-    <topic-editor :show="editor" @success=onTopicCreate @close="edit = false"/>
+    <topic-editor :show="editor" @success=onTopicCreate @close="editor = false"/>
     <!--收藏-->
     <topic-collect-list :show="collects" @close="collects=false"/>
   </div>

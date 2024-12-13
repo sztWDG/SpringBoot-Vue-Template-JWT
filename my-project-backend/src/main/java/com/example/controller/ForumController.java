@@ -2,6 +2,7 @@ package com.example.controller;
 
 import com.example.entity.RestBean;
 import com.example.entity.dto.Interact;
+import com.example.entity.vo.request.AddCommentVO;
 import com.example.entity.vo.request.TopicCreateVO;
 import com.example.entity.vo.request.TopicUpdateVO;
 import com.example.entity.vo.request.WeatherVO;
@@ -54,7 +55,7 @@ public class ForumController {
                 .toList());
     }
 
-    @PostMapping("/create-Topic")
+    @PostMapping("/create-topic")
     public RestBean<Void> createTopic(@Valid @RequestBody TopicCreateVO vo,
                                       @RequestAttribute(Const.ATTR_USER_ID) int id) {
 
@@ -102,4 +103,10 @@ public class ForumController {
         return utils.messageHandle(() -> topicService.updateTopic(id, vo));
     }
 
+    @PostMapping("/add-comment")
+    public RestBean<Void> addComment(@Valid @RequestBody AddCommentVO vo,
+                                     @RequestAttribute(Const.ATTR_USER_ID) int id) {
+
+        return utils.messageHandle(() -> topicService.createComment(id, vo));
+    }
 }
