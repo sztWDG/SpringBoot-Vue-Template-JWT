@@ -6,7 +6,7 @@ import {computed, onMounted, reactive, ref} from "vue";
 import {
   Back,
   Bell,
-  ChatDotSquare, Collection, DataLine, Document, Files,
+  ChatDotSquare, Check, Collection, DataLine, Document, Files,
   Location, Lock, Message,
   Monitor,
   Notification, Operation,
@@ -14,6 +14,7 @@ import {
   School, Search,
   Umbrella, User
 } from "@element-plus/icons-vue";
+import LightCard from "@/components/LightCard.vue";
 
 const store = useStore();
 const loading = ref(true);
@@ -23,14 +24,31 @@ const searchInput = reactive({
   text: ''
 })
 
+const notification = ref([])
 
 get('/api/user/info', (data) => {
   store.user = data;
   loading.value = false;
 })
 
+const loadNotification =
+    () => get('/api/notification/list', data => notification.value = data)
+loadNotification()
+
+
 function userLogout() {
   logout(() => router.push("/"))
+}
+
+function confirmNotification(id, url) {
+  get(`/api/notification/delete?id=${id}`, () => {
+    loadNotification()
+    window.open(url)
+  })
+}
+
+function deleteAllNotification() {
+  get(`/api/notification/delete-all`, loadNotification)
 }
 </script>
 
@@ -60,6 +78,38 @@ function userLogout() {
         </div>
 
         <div class="user-info" style="font-size: 25px;color: indigo;text-align: center">
+          <el-popover placement="bottom" :width="350" trigger="click">
+            <template #reference>
+              <el-badge style="margin-right: 15px" is-dot :hidden="!notification.length">
+                <div class="notification">
+                  <el-icon><Bell/></el-icon>
+                  <div style="font-size: 10px">消息</div>
+                </div>
+              </el-badge>
+            </template>
+
+            <!--如果没有消息 -->
+            <el-empty :image-size="80" description="暂时没有未读消息哦~" v-if="!notification.length"/>
+            <!--有消息的话 -->
+            <el-scrollbar :max-height="500" v-else>
+              <light-card v-for="item in notification" class="notification-item"
+                          @click="confirmNotification(item.id, item.url)">
+                <div>
+                  <el-tag size="small" :type="item.type">消息</el-tag>&nbsp;
+                  <span style="font-weight: bold">{{item.title}}</span>
+                </div>
+                <el-divider style="margin: 7px 0 3px 0"/>
+                <div style="font-size: 13px;color: grey">
+                  {{item.content}}
+                </div>
+              </light-card>
+            </el-scrollbar>
+            <!--清除未读消息 -->
+            <div style="margin-top: 10px">
+              <el-button size="small" type="info" :icon="Check" @click="deleteAllNotification"
+                         style="width: 100%" plain>清除全部未读消息</el-button>
+            </div>
+          </el-popover>
 
           <div class="profile">
             <div>{{ store.user.username }}</div>
@@ -253,6 +303,28 @@ function userLogout() {
 
 
 <style scoped lang="less">
+
+.notification-item {
+  transition: .3s;
+  &:hover {
+    cursor: pointer;
+    opacity: 0.7;
+  }
+}
+
+
+.notification {
+  font-size: 22px;
+  line-height: 14px;
+  text-align: center;
+
+  &:hover {
+    color: gray;
+    cursor: pointer;
+  }
+
+}
+
 .main-content-page {
   padding: 0;
   background-color: #f7f8fa;
