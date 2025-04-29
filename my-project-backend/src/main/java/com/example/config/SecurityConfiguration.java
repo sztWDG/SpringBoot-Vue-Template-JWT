@@ -29,7 +29,7 @@ import java.io.PrintWriter;
  * SpringSecurity相关配置
  */
 @Configuration
-public class SecurityConfiguration {
+public class  SecurityConfiguration {
 
     @Resource
     JwtAuthenticationFilter jwtAuthenticationFilter;
@@ -57,7 +57,7 @@ public class SecurityConfiguration {
                         //头像为静态资源，我们这边给放行
                         .requestMatchers("/images/**").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
-                        .anyRequest().hasAnyRole(Const.ROLE_DEFAULT)
+                        .anyRequest().hasAnyRole(Const.ROLE_DEFAULT, Const.ROLE_ADMIN)
                 )
                 .formLogin(conf -> conf
                         .loginProcessingUrl("/api/auth/login")
@@ -90,7 +90,7 @@ public class SecurityConfiguration {
      * @param response 响应
      * @param exceptionOrAuthentication 异常或是验证实体
      * @throws IOException 可能的异常
-     */
+      */
     private void handleProcess(HttpServletRequest request,
                                HttpServletResponse response,
                                Object exceptionOrAuthentication) throws IOException {

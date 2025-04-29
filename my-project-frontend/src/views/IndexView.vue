@@ -16,6 +16,31 @@ import {
 } from "@element-plus/icons-vue";
 import LightCard from "@/components/LightCard.vue";
 
+const userMenu = [
+  {
+    title: '校园论坛', icon: Location, sub: [
+      { title: '帖子广场', icon: ChatDotSquare, index: '/index' },
+      { title: '失物招领', icon: Bell },
+      { title: '校园活动', icon: Notification },
+      { title: '表白墙', icon: Umbrella },
+      { title: '海文考研', icon: School }
+    ]
+  }, {
+    title: '探索与发现', icon: Position, sub: [
+      { title: '成绩查询', icon: Document },
+      { title: '班级课程表', icon: Files },
+      { title: '教务通知', icon: Monitor },
+      { title: '在线图书馆', icon: Collection },
+      { title: '预约教室', icon: DataLine }
+    ]
+  }, {
+    title: '个人设置', icon: Operation, sub: [
+      { title: '个人信息设置', icon: User, index: '/index/user-setting' },
+      { title: '账号安全设置', icon: Lock, index: '/index/privacy-setting' }
+    ]
+  }
+]
+
 const store = useStore();
 const loading = ref(true);
 
@@ -36,9 +61,9 @@ const loadNotification =
 loadNotification()
 
 
-function userLogout() {
-  logout(() => router.push("/"))
-}
+// function userLogout() {
+//   logout(() => router.push("/"))
+// }
 
 function confirmNotification(id, url) {
   get(`/api/notification/delete?id=${id}`, () => {
@@ -52,12 +77,13 @@ function deleteAllNotification() {
 }
 </script>
 
-
 <template>
   <div class="main-content" v-loading="loading" element-loading-text="正在进入，请稍后...">
     <el-container style="height: 100%" v-if="!loading">
       <el-header class="main-content-header">
-        <el-image class="logo" src="https://element-plus.org/images/element-plus-logo.svg" style="margin-right: auto"/>
+        <div style="width: 320px; height: 32px">
+          <el-image class="logo" src="https://element-plus.org/images/element-plus-logo.svg" style="margin-right: auto"/>
+        </div>
 
         <div style="flex: 1;padding: 0 20px;text-align: center ">
           <el-input style="width: 100%;max-width: 450px" placeholder="搜索论坛相关内容...">
@@ -77,10 +103,10 @@ function deleteAllNotification() {
           </el-input>
         </div>
 
-        <div class="user-info" style="font-size: 25px;color: indigo;text-align: center">
+        <user-info>
           <el-popover placement="bottom" :width="350" trigger="click">
             <template #reference>
-              <el-badge style="margin-right: 15px" is-dot :hidden="!notification.length">
+              <el-badge is-dot :hidden="!notification.length">
                 <div class="notification">
                   <el-icon><Bell/></el-icon>
                   <div style="font-size: 10px">消息</div>
@@ -110,37 +136,8 @@ function deleteAllNotification() {
                          style="width: 100%" plain>清除全部未读消息</el-button>
             </div>
           </el-popover>
+        </user-info>
 
-          <div class="profile">
-            <div>{{ store.user.username }}</div>
-            <div>{{ store.user.email }}</div>
-          </div>
-          <!--          dropdown: 鼠标悬浮之后显示列表信息-->
-          <el-dropdown>
-            <el-avatar :src="store.avatarUrl"/>
-            <template #dropdown>
-              <el-dropdown-item>
-                <el-icon>
-                  <Operation/>
-                </el-icon>
-                个人设置
-              </el-dropdown-item>
-              <el-dropdown-item>
-                <el-icon>
-                  <Message/>
-                </el-icon>
-                消息列表
-              </el-dropdown-item>
-              <el-dropdown-item @click="userLogout">
-                <el-icon>
-                  <Back/>
-                </el-icon>
-                退出登录
-              </el-dropdown-item>
-            </template>
-          </el-dropdown>
-          Annie
-        </div>
       </el-header>
       <el-container>
         <el-aside width="230px">
@@ -156,133 +153,25 @@ function deleteAllNotification() {
                 :default-active="$route.path"
                 :default-openeds="['1','2','3']"
                 style="height: calc(100vh - 55px)">
-              <el-sub-menu index="1">
+              <el-sub-menu :index="(index+1).toString()"
+                           v-for="(menu, index) in userMenu">
                 <template #title>
                   <el-icon>
-                    <location/>
+                    <component :is="menu.icon"/>
                   </el-icon>
-                  <span><b>校园论坛</b></span>
+                  <span><b>{{ menu.title }}</b></span>
                 </template>
-                <el-menu-item index="/index">
+                <el-menu-item :index="subMenu.index" v-for="subMenu in menu.sub">
                   <template #title>
                     <el-icon>
-                      <chat-dot-square/>
+                      <component :is="subMenu.icon"/>
                     </el-icon>
-                    帖子广场
-                  </template>
-                </el-menu-item>
-                <el-menu-item>
-                  <template #title>
-                    <el-icon>
-                      <bell/>
-                    </el-icon>
-                    失物招领
-                  </template>
-                </el-menu-item>
-                <el-menu-item>
-                  <template #title>
-                    <el-icon>
-                      <Notification/>
-                    </el-icon>
-                    校园活动
-                  </template>
-                </el-menu-item>
-                <el-menu-item>
-                  <template #title>
-                    <el-icon>
-                      <Umbrella/>
-                    </el-icon>
-                    表白墙
-                  </template>
-                </el-menu-item>
-                <el-menu-item>
-                  <template #title>
-                    <el-icon>
-                      <School/>
-                    </el-icon>
-                    海文考研
-                    <el-tag style="margin-left: 10px" size="small">合作机构</el-tag>
-                  </template>
-                </el-menu-item>
-              </el-sub-menu>
-
-              <el-sub-menu index="2">
-                <template #title>
-                  <el-icon>
-                    <Position/>
-                  </el-icon>
-                  <span><b>探索与发现</b></span>
-                </template>
-                <el-menu-item>
-                  <template #title>
-                    <el-icon>
-                      <Document/>
-                    </el-icon>
-                    成绩查询
-                  </template>
-                </el-menu-item>
-                <el-menu-item>
-                  <template #title>
-                    <el-icon>
-                      <Files/>
-                    </el-icon>
-                    班级课程表
-                  </template>
-                </el-menu-item>
-                <el-menu-item>
-                  <template #title>
-                    <el-icon>
-                      <Monitor/>
-                    </el-icon>
-                    校务通知
-                  </template>
-                </el-menu-item>
-                <el-menu-item>
-                  <template #title>
-                    <el-icon>
-                      <Collection/>
-                    </el-icon>
-                    在线图书馆
-                  </template>
-                </el-menu-item>
-                <el-menu-item>
-                  <template #title>
-                    <el-icon>
-                      <DataLine/>
-                    </el-icon>
-                    预约教室
-                  </template>
-                </el-menu-item>
-              </el-sub-menu>
-
-              <el-sub-menu index="3">
-                <template #title>
-                  <el-icon>
-                    <Operation/>
-                  </el-icon>
-                  <span><b>个人设置</b></span>
-                </template>
-                <el-menu-item index="/index/user-setting">
-                  <template #title>
-                    <el-icon>
-                      <User/>
-                    </el-icon>
-                    个人信息设置
-                  </template>
-                </el-menu-item>
-                <el-menu-item index="/index/privacy-setting">
-                  <template #title>
-                    <el-icon>
-                      <Lock/>
-                    </el-icon>
-                    账号安全设置
+                    {{subMenu.title}}
                   </template>
                 </el-menu-item>
               </el-sub-menu>
             </el-menu>
           </el-scrollbar>
-
-
         </el-aside>
 
         <el-main class="main-content-page" style="padding: 0">

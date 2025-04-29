@@ -5,7 +5,8 @@ const authItemName = "authorize"
 
 const accessHeader = () => {
     return {
-        'Authorization': `Bearer ${takeAccessToken()}`
+        //Qxk4.29:?.token
+        'Authorization': `Bearer ${takeAccessToken()?.token}`
     }
 }
 
@@ -28,13 +29,14 @@ function takeAccessToken() {
         ElMessage.warning("登录状态已过期，请重新登录！")
         return null
     }
-    return authObj.token
+    return authObj
 }
 
-function storeAccessToken(remember, token, expire){
+function storeAccessToken(remember, token, expire, role){
     const authObj = {
         token: token,
-        expire: expire
+        expire: expire,
+        role: role
     }
     const str = JSON.stringify(authObj)
     if(remember)
@@ -73,7 +75,7 @@ function login(username, password, remember, success, failure = defaultFailure){
     }, {
         'Content-Type': 'application/x-www-form-urlencoded'
     }, (data) => {
-        storeAccessToken(remember, data.token, data.expire)
+        storeAccessToken(remember, data.token, data.expire, data.role);
         ElMessage.success(`登录成功，欢迎 ${data.username} 来到我们的系统`)
         success(data)
     }, failure)
@@ -95,8 +97,12 @@ function get(url, success, failure = defaultFailure) {
     internalGet(url, accessHeader(), success, failure)
 }
 
-function unauthorized() {
+function isUnauthorized() {
     return !takeAccessToken()
 }
 
-export { post, get, login, logout, unauthorized, accessHeader }
+function isRoleAdmin() {
+    return takeAccessToken()?.role === 'admin'
+}
+
+export { post, get, login, logout, isUnauthorized, accessHeader,isRoleAdmin }
