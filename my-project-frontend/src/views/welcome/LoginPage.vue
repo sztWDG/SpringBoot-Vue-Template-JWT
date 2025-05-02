@@ -51,8 +51,9 @@
 <script setup>
 import {User, Lock} from '@element-plus/icons-vue'
 import router from "@/router";
-import {reactive, ref} from "vue";
+import {inject, reactive, ref} from "vue";
 import {login} from '@/net'
+import {apiUserInfo} from "@/net/api/user";
 
 const formRef = ref()
 const form = reactive({
@@ -70,10 +71,15 @@ const rules = {
   ]
 }
 
+//初次登陆也需要，不然登录成功之后不会获取用户信息
+const  loading = inject('userLoading')
 function userLogin() {
   formRef.value.validate((isValid) => {
     if(isValid) {
-      login(form.username, form.password, form.remember, () => router.push("/index"))
+      login(form.username, form.password, form.remember, () => {
+        apiUserInfo(loading)
+        router.push("/index")
+      })
     }
   });
 }

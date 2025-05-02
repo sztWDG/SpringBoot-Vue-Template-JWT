@@ -1,10 +1,7 @@
 <script setup>
-import {get, logout} from '@/net'
-import router from "@/router";
-import {useStore} from "@/store";
-import {computed, onMounted, reactive, ref} from "vue";
+import {get} from '@/net'
+import {inject, reactive, ref} from "vue";
 import {
-  Back,
   Bell,
   ChatDotSquare, Check, Collection, DataLine, Document, Files,
   Location, Lock, Message,
@@ -41,8 +38,9 @@ const userMenu = [
   }
 ]
 
-const store = useStore();
-const loading = ref(true);
+//通过inject来完成store了
+// const store = useStore();
+const loading = inject('userLoading')
 
 const searchInput = reactive({
   type: '1',
@@ -50,11 +48,11 @@ const searchInput = reactive({
 })
 
 const notification = ref([])
-
-get('/api/user/info', (data) => {
-  store.user = data;
-  loading.value = false;
-})
+//此处为了避免频繁切换导致的不必要的重新加载，于是放入App.Vue中，优化系统
+// get('/api/user/info', (data) => {
+//   store.user = data;
+//   loading.value = false;
+// })
 
 const loadNotification =
     () => get('/api/notification/list', data => notification.value = data)
