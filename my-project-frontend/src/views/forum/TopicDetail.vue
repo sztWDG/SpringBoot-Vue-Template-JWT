@@ -1,8 +1,6 @@
 <script setup>
 import {useRoute} from "vue-router";
-import {get, post} from "@/net";
-import axios from "axios";
-import {computed, reactive, ref} from "vue";
+import {reactive, ref} from "vue";
 import {ArrowLeft, ChatSquare, CircleCheck, Delete, EditPen, Female, Male, Plus, Star} from "@element-plus/icons-vue";
 import {QuillDeltaToHtmlConverter} from 'quill-delta-to-html';
 import router from "@/router";
@@ -13,6 +11,13 @@ import {ElMessage} from "element-plus";
 import {useStore} from "@/store";
 import TopicEditor from "@/components/TopicEditor.vue";
 import TopicCommentEditor from "@/components/TopicCommentEditor.vue";
+import {
+  apiForumCommentDelete,
+  apiForumComments,
+  apiForumInteract,
+  apiForumTopic,
+  apiForumUpdateTopic
+} from "@/net/api/forum";
 
 const route = useRoute()
 const store = useStore()
@@ -34,13 +39,12 @@ const comment = reactive({
   quote: null
 })
 
-const init = () => get(`api/forum/topic?tid=${tid}`, data => {
-  topic.data = data;
-  topic.like = data.interact.like;
-  topic.collect = data.interact.collect;
-  loadComments(1);
+const init = () => apiForumTopic(tid, data => {
+  topic.data = data
+  topic.like = data.interact.like
+  topic.collect = data.interact.collect
+  loadComments(1)
 })
-
 init()
 
 // const content = computed(() => {
@@ -50,23 +54,16 @@ init()
 // }) 换成下面这个
 function convertToHtml(content) {
   const ops = JSON.parse(content).ops
-  const converter = new QuillDeltaToHtmlConverter(ops, { inlineStyles: true });
+  const converter = new QuillDeltaToHtmlConverter(ops, {inlineStyles: true});
   return converter.convert();
 }
 
 function interact(type, message) {
-  //注意：这边使用！，因为初始状态为false
-  get(`/api/forum/interact?tid=${tid}&type=${type}&state=${!topic[type]}`, () => {
-    topic[type] = !topic[type];
-    if (topic[type])
-      ElMessage.success(`${message}成功！`);
-    else
-      ElMessage.success(`已取消${message}`);
-  })
+  apiForumInteract(tid, type, topic, message)
 }
 
 function updateTopic(editor) {
-  post('/api/forum/update-topic', {
+  apiForumUpdateTopic({
     id: tid,
     type: editor.type.id,
     title: editor.title,
@@ -79,11 +76,11 @@ function updateTopic(editor) {
 }
 
 function loadComments(page) {
-  topic.comments = null;
-  topic.page = page;
-  get(`/api/forum/comments?tid=${tid}&page=${page - 1}`,
-      data => topic.comments = data)
+  topic.comments = null
+  topic.page = page
+  apiForumComments(tid, page - 1, data => topic.comments = data)
 }
+
 
 function onCommentAdd() {
   comment.show = false;
@@ -93,7 +90,7 @@ function onCommentAdd() {
 }
 
 function deleteComment(id) {
-  get(`/api/forum/delete-comment?id=${id}`, () => {
+  apiForumCommentDelete(id, () => {
     ElMessage.success('删除评论成功！')
     loadComments(topic.page)
   })
@@ -172,7 +169,9 @@ function deleteComment(id) {
           <interact-button name="收藏本帖" check-name="已收藏" color="orange" :check="topic.collect"
                            @check="interact('collect', '收藏')"
                            style="margin-left: 15px">
-            <el-icon><Star/></el-icon>
+            <el-icon>
+              <Star/>
+            </el-icon>
           </interact-button>
         </div>
       </div>
@@ -183,7 +182,7 @@ function deleteComment(id) {
         <div class="topic-main" style="margin-top: 10px" v-for="item in topic.comments">
           <!-- 左侧 -->
           <div class="topic-main-left">
-            <el-avatar :src="store.avatarUserUrl(item.user.avatar)"  :size="60"/>
+            <el-avatar :src="store.avatarUserUrl(item.user.avatar)" :size="60"/>
             <div>
               <!--展示性别 -->
               <div style="font-size: 18px;font-weight: bold;">
@@ -216,24 +215,26 @@ function deleteComment(id) {
             </div>
             <!--如果quote存在，则显示回复-->
             <div v-if="item.quote" class="comment-quote">
-              回复: {{item.quote}}
+              回复: {{ item.quote }}
             </div>
             <div class="topic-content" v-html="convertToHtml(item.content)"></div>
             <div style="text-align: right">
               <el-link :icon="ChatSquare" @click="comment.show = true;comment.quote = item"
-                       type="info">&nbsp;回复评论</el-link>
+                       type="info">&nbsp;回复评论
+              </el-link>
               <!--判断：若是帖子主人，则可以删除 -->
               <el-link :icon="Delete" type="danger" v-if="item.user.id === store.user.id"
-                       style="margin-left: 20px" @click="deleteComment(item.id)">&nbsp;删除评论</el-link>
+                       style="margin-left: 20px" @click="deleteComment(item.id)">&nbsp;删除评论
+              </el-link>
             </div>
           </div>
         </div>
-      <div style="width: fit-content;margin: 20px auto">
-        <el-pagination background layout="prev, pager, next"
-                       v-model:current-page="topic.page" @current-change="loadComments"
-                       :total="topic.data.comments" :page-size="10"
-                       hide-on-single-page/>
-      </div>
+        <div style="width: fit-content;margin: 20px auto">
+          <el-pagination background layout="prev, pager, next"
+                         v-model:current-page="topic.page" @current-change="loadComments"
+                         :total="topic.data.comments" :page-size="10"
+                         hide-on-single-page/>
+        </div>
       </div>
     </transition>
 

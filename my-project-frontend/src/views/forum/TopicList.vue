@@ -14,16 +14,15 @@ import {
   Microphone, Picture, Star
 } from "@element-plus/icons-vue";
 import Weather from "@/components/Weather.vue";
-import {computed, reactive, ref, watch} from "vue";
-import {get} from "@/net";
+import {computed, onMounted, reactive, ref, watch} from "vue";
 import {ElMessage} from "element-plus";
 import TopicEditor from "@/components/TopicEditor.vue";
 import {useStore} from "@/store";
-import axios from "axios";
 import ColorDot from "@/components/ColorDot.vue";
 import router from "@/router";
 import TopicTag from "@/components/TopicTag.vue";
 import TopicCollectList from "@/components/TopicCollectList.vue";
+import {apiForumTopicList, apiForumTopTopics, apiForumWeather} from "@/net/api/forum";
 
 const store = useStore()
 
@@ -67,15 +66,12 @@ const today = computed(() => {
 //   store.forum.types = array
 // })
 
-//获取置顶帖子信息
-get('api/forum/top-topic', data => topics.top = data)
-
 //请求帖子列表封成一个函数
 function updateList() {
   //如果已经到最后，则返回
   if (topics.end) return;
   //记得写请求参数
-  get(`api/forum/list-topic?page=${topics.page}&type=${topics.type}`, data => {
+  apiForumTopicList(topics.page, topics.type, data => {
     //如果data=true，则继续加载数据到list，并pege++
     if (data) {
       data.forEach(d => topics.list.push(d))
@@ -86,6 +82,7 @@ function updateList() {
       topics.end = true
     }
   })
+
 }
 
 //在一开始的时候调用一次，发帖成功后也调用一次
@@ -109,19 +106,19 @@ function resetList() {
 navigator.geolocation.getCurrentPosition(position => {
   const longitude = position.coords.longitude;
   const latitude = position.coords.latitude;
-  get(`api/forum/weather?longitude=${longitude}&latitude=${latitude}`, data => {
+
+  apiForumWeather(longitude, latitude, data => {
     Object.assign(weather, data)
     weather.success = true;
-
   })
 }, error => {
 
   console.info(error);
   ElMessage.warning('位置信息获取超时，请检测网络设置');
-  get(`api/forum/weather?longitude=116.40529&latitude=39.90499}`, data => {
+
+  apiForumWeather(116.40529, 39.90499, data => {
     Object.assign(weather, data)
     weather.success = true;
-
   })
 }, {
   //3秒钟还未获取到，则错误了
@@ -129,6 +126,10 @@ navigator.geolocation.getCurrentPosition(position => {
   enableHighAccuracy: true
 })
 
+onMounted(() => {
+  //获取置顶帖子信息
+  apiForumTopTopics(data => topics.top = data)
+})
 </script>
 
 <template>

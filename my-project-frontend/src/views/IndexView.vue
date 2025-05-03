@@ -12,6 +12,7 @@ import {
   Umbrella, User
 } from "@element-plus/icons-vue";
 import LightCard from "@/components/LightCard.vue";
+import {apiNotificationDelete, apiNotificationDeleteAll, apiNotificationList} from "@/net/api/user";
 
 const userMenu = [
   {
@@ -55,7 +56,7 @@ const notification = ref([])
 // })
 
 const loadNotification =
-    () => get('/api/notification/list', data => notification.value = data)
+    () => apiNotificationList(data => notification.value = data)
 loadNotification()
 
 
@@ -64,14 +65,14 @@ loadNotification()
 // }
 
 function confirmNotification(id, url) {
-  get(`/api/notification/delete?id=${id}`, () => {
+  apiNotificationDelete(id, () => {
     loadNotification()
     window.open(url)
   })
 }
 
 function deleteAllNotification() {
-  get(`/api/notification/delete-all`, loadNotification)
+  apiNotificationDeleteAll(loadNotification)
 }
 </script>
 

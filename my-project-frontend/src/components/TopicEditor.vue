@@ -7,9 +7,10 @@ import {ImageExtend, QuillWatch} from "quill-image-super-solution-module";
 import '@vueup/vue-quill/dist/vue-quill.snow.css'
 import axios from "axios";
 import {ElMessage} from "element-plus";
-import {accessHeader, get, post} from "@/net";
+import {accessHeader} from "@/net";
 import ColorDot from "@/components/ColorDot.vue";
 import {useStore} from "@/store";
+import {apiForumTopicCreate} from "@/net/api/forum";
 
 // import {Check, Document} from "@element-plus/icons-vue";
 // import {computed, reactive, ref} from "vue";
@@ -46,7 +47,7 @@ const props = defineProps({
   submit: {
     //默认就是之前的发帖样式
     default: (editor, success) => {
-      post('/api/forum/create-topic', {
+      apiForumTopicCreate({
         type: editor.type.id,
         title: editor.title,
         content: editor.text

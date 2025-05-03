@@ -8,6 +8,7 @@ export const apiForumTopic = (tid, success) =>
     get(`api/forum/topic?tid=${tid}`, success)
 
 export const apiForumInteract = (tid, type, topic, message) => {
+    //注意：这边使用！，因为初始状态为false
     get(`/api/forum/interact?tid=${tid}&type=${type}&state=${!topic[type]}`, () => {
         topic[type] = !topic[type]
         if(topic[type])
