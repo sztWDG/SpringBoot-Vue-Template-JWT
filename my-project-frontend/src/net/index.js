@@ -1,5 +1,6 @@
 import axios from "axios";
 import {ElMessage} from "element-plus";
+import router from "@/router";
 
 const authItemName = "authorize"
 
@@ -45,9 +46,12 @@ function storeAccessToken(remember, token, expire, role) {
         sessionStorage.setItem(authItemName, str)
 }
 
-function deleteAccessToken() {
+function deleteAccessToken(redirect = false) {
     localStorage.removeItem(authItemName)
     sessionStorage.removeItem(authItemName)
+    if(redirect) {
+        router.push({ name: 'welcome-login' })
+    }
 }
 
 function internalPost(url, data, headers, success, failure, error = defaultError) {
