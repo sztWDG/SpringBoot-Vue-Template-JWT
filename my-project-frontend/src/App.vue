@@ -3,6 +3,8 @@ import { useDark, useToggle } from '@vueuse/core'
 import {onMounted, provide, ref} from "vue";
 import {isUnauthorized} from "@/net";
 import {apiUserInfo} from "@/net/api/user";
+import zhCn from "element-plus/es/locale/lang/zh-cn";
+
 
 useDark({
   selector: 'html',
@@ -27,11 +29,12 @@ onMounted(() => {
 </script>
 
 <template>
-  <header>
-    <div class="wrapper">
-      <router-view/>
-    </div>
-  </header>
+    <!--设置语言 el -->
+    <el-config-provider :locale="zhCn">
+        <div class="wrapper">
+            <router-view/>
+        </div>
+    </el-config-provider>
 </template>
 
 <style scoped>

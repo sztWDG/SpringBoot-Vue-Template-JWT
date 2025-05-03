@@ -41,16 +41,21 @@ const route = useRoute()
 const loading = inject('userLoading')
 const pageTabs = ref([])
 
+//点击顶部tab栏的各个项目实现跳转到相应页面
 function handleTabClick({ props }) {
   router.push(props.name)
 }
 
+//关闭标签之后要执行的逻辑
 function handleTabClose(name) {
   const index = pageTabs.value.findIndex(tab => tab.name === name)
+  //若name===当前路径
   const isCurrent = name === route.fullPath
   pageTabs.value.splice(index, 1)
   if(pageTabs.value.length > 0) {
-    //删除后，标签列表中还有剩余的Tab且关闭的是当前的，则自动进行切换，默认切换到上一个，如果没有上一个，则切换到下一个
+    /*QxkQuestion-关闭标签-5.3：
+    删除后，标签列表中还有剩余的Tab且关闭的是当前的，则自动进行切换，默认切换到上一个，
+    如果没有上一个，则切换到下一个  */
     if(isCurrent) {
       router.push(pageTabs.value[Math.max(0, index - 1)].name)
     }
@@ -59,8 +64,10 @@ function handleTabClose(name) {
   }
 }
 
+//增加标签逻辑
 function addAdminTab(menu) {
-  if(!menu.index) return
+  if(!menu.index) return //点击没有index的标签就直接返回即可
+  //做一个判断，若点击的页面是新页面则添加至tab栏
   if(pageTabs.value.findIndex(tab => tab.name === menu.index) < 0) {
     pageTabs.value.push({
       title: menu.title,
@@ -69,6 +76,7 @@ function addAdminTab(menu) {
   }
 }
 
+//通过路径进入也可以正常加入标签
 onMounted(() => {
   const initPage = adminMenu
       .flatMap(menu => menu.sub)

@@ -57,6 +57,7 @@ public class  SecurityConfiguration {
                         //头像为静态资源，我们这边给放行
                         .requestMatchers("/images/**").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                        .requestMatchers("api/admin/**").hasRole(Const.ROLE_ADMIN)
                         .anyRequest().hasAnyRole(Const.ROLE_DEFAULT, Const.ROLE_ADMIN)
                 )
                 .formLogin(conf -> conf
