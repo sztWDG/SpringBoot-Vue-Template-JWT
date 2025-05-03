@@ -10,6 +10,7 @@ public final class Const {
     //请求频率限制
     public final static String FLOW_LIMIT_COUNTER = "flow:counter:";
     public final static String FLOW_LIMIT_BLOCK = "flow:block:";
+    public final static String BANNED_BLOCK = "banned:block:";
     //邮件验证码
     public final static String VERIFY_EMAIL_LIMIT = "verify:email:limit:";
     public final static String VERIFY_EMAIL_DATA = "verify:email:data:";

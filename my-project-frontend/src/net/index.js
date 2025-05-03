@@ -22,9 +22,9 @@ const defaultFailure = (message, status, url) => {
 
 function takeAccessToken() {
     const str = localStorage.getItem(authItemName) || sessionStorage.getItem(authItemName);
-    if(!str) return null
+    if (!str) return null
     const authObj = JSON.parse(str)
-    if(new Date(authObj.expire) <= new Date()) {
+    if (new Date(authObj.expire) <= new Date()) {
         deleteAccessToken()
         ElMessage.warning("登录状态已过期，请重新登录！")
         return null
@@ -32,14 +32,14 @@ function takeAccessToken() {
     return authObj
 }
 
-function storeAccessToken(remember, token, expire, role){
+function storeAccessToken(remember, token, expire, role) {
     const authObj = {
         token: token,
         expire: expire,
         role: role
     }
     const str = JSON.stringify(authObj)
-    if(remember)
+    if (remember)
         localStorage.setItem(authItemName, str)
     else
         sessionStorage.setItem(authItemName, str)
@@ -50,25 +50,31 @@ function deleteAccessToken() {
     sessionStorage.removeItem(authItemName)
 }
 
-function internalPost(url, data, headers, success, failure, error = defaultError){
-    axios.post(url, data, { headers: headers }).then(({data}) => {
-        if(data.code === 200)
+function internalPost(url, data, headers, success, failure, error = defaultError) {
+    axios.post(url, data, {headers: headers}).then(({data}) => {
+        if (data.code === 200)
             success(data.data)
-        else
+        else if (data.code === 401) {
+            failure('登录状态已过期，请重新登录！')
+            deleteAccessToken(true)
+        } else
             failure(data.message, data.code, url)
     }).catch(err => error(err))
 }
 
-function internalGet(url, headers, success, failure, error = defaultError){
-    axios.get(url, { headers: headers }).then(({data}) => {
-        if(data.code === 200)
+function internalGet(url, headers, success, failure, error = defaultError) {
+    axios.get(url, {headers: headers}).then(({data}) => {
+        if (data.code === 200)
             success(data.data)
-        else
+        else if (data.code === 401) {
+            failure('登录状态已过期，请重新登录！')
+            deleteAccessToken(true)
+        } else
             failure(data.message, data.code, url)
     }).catch(err => error(err))
 }
 
-function login(username, password, remember, success, failure = defaultFailure){
+function login(username, password, remember, success, failure = defaultFailure) {
     internalPost('/api/auth/login', {
         username: username,
         password: password
@@ -82,10 +88,10 @@ function login(username, password, remember, success, failure = defaultFailure){
 }
 
 function post(url, data, success, failure = defaultFailure) {
-    internalPost(url, data, accessHeader() , success, failure)
+    internalPost(url, data, accessHeader(), success, failure)
 }
 
-function logout(success, failure = defaultFailure){
+function logout(success, failure = defaultFailure) {
     get('/api/auth/logout', () => {
         deleteAccessToken()
         ElMessage.success(`退出登录成功，欢迎您再次使用`)
@@ -105,4 +111,4 @@ function isRoleAdmin() {
     return takeAccessToken()?.role === 'admin'
 }
 
-export { post, get, login, logout, isUnauthorized, accessHeader,isRoleAdmin }
+export {post, get, login, logout, isUnauthorized, accessHeader, isRoleAdmin}
