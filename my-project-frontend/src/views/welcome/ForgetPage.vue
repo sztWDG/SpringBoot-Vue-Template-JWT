@@ -83,6 +83,7 @@ import {EditPen, Lock, Message} from "@element-plus/icons-vue";
 import {get, post} from "@/net";
 import {ElMessage} from "element-plus";
 import router from "@/router";
+import {apiAuthAskCode, apiAuthResetPassword, apiAuthRestConfirm} from "@/net/api/user";
 
 const active = ref(0)
 
@@ -129,44 +130,43 @@ const onValidate = (prop, isValid) => {
         isEmailValid.value = isValid
 }
 
-const validateEmail = () => {
-    coldTime.value = 60
-    get(`/api/auth/ask-code?email=${form.email}&type=reset`, () => {
-        ElMessage.success(`验证码已发送到邮箱: ${form.email}，请注意查收`)
-        const handle = setInterval(() => {
-          coldTime.value--
-          if(coldTime.value === 0) {
-            clearInterval(handle)
-          }
-        }, 1000)
-    }, (message) => {
-        ElMessage.warning(message)
-        coldTime.value = 0
-    })
-}
+// const validateEmail = () => {
+//     coldTime.value = 60
+//     get(`/api/auth/ask-code?email=${form.email}&type=reset`, () => {
+//         ElMessage.success(`验证码已发送到邮箱: ${form.email}，请注意查收`)
+//         const handle = setInterval(() => {
+//           coldTime.value--
+//           if(coldTime.value === 0) {
+//             clearInterval(handle)
+//           }
+//         }, 1000)
+//     }, (message) => {
+//         ElMessage.warning(message)
+//         coldTime.value = 0
+//     })
+// }
+const validateEmail = () => apiAuthAskCode(form.email, coldTime,'reset')
 
 const confirmReset = () => {
-    formRef.value.validate((isValid) => {
-        if(isValid) {
-            post('/api/auth/reset-confirm', {
-                email: form.email,
-                code: form.code
-            }, () => active.value++)
-        }
-    })
+  formRef.value.validate((isValid) => {
+    if(isValid) {
+      apiAuthRestConfirm({
+        email: form.email,
+        code: form.code
+      }, active)
+    }
+  })
 }
+
 
 const doReset = () => {
     formRef.value.validate((isValid) => {
         if(isValid) {
-            post('/api/auth/reset-password', {
-                email: form.email,
-                code: form.code,
-                password: form.password
-            }, () => {
-                ElMessage.success('密码重置成功，请重新登录')
-                router.push('/')
-            })
+          apiAuthResetPassword({
+            email: form.email,
+            code: form.code,
+            password: form.password
+          })
         }
     })
 }

@@ -68,7 +68,7 @@ import {EditPen, Lock, Message, User} from "@element-plus/icons-vue";
 import router from "@/router";
 import {reactive, ref} from "vue";
 import {ElMessage} from "element-plus";
-import {get, post} from "@/net";
+import {apiAuthAskCode, apiAuthRegister} from "@/net/api/user";
 
 const form = reactive({
     username: '',
@@ -131,36 +131,33 @@ const onValidate = (prop, isValid) => {
 const register = () => {
     formRef.value.validate((isValid) => {
         if(isValid) {
-            post('/api/auth/register', {
-                username: form.username,
-                password: form.password,
-                email: form.email,
-                code: form.code
-            }, () => {
-                ElMessage.success('注册成功，欢迎加入我们')
-                router.push("/")
-            })
+          apiAuthRegister({
+            username: form.username,
+            password: form.password,
+            email: form.email,
+            code: form.code
+          })
         } else {
             ElMessage.warning('请完整填写注册表单内容！')
         }
     })
 }
-
-const validateEmail = () => {
-    coldTime.value = 60
-    get(`/api/auth/ask-code?email=${form.email}&type=register`, () => {
-        ElMessage.success(`验证码已发送到邮箱: ${form.email}，请注意查收`)
-        const handle = setInterval(() => {
-          coldTime.value--
-          if(coldTime.value === 0) {
-            clearInterval(handle)
-          }
-        }, 1000)
-    }, undefined, (message) => {
-        ElMessage.warning(message)
-        coldTime.value = 0
-    })
-}
+const validateEmail = () => apiAuthAskCode(form.email, coldTime)
+// const validateEmail = () => {
+//     coldTime.value = 60
+//     get(`/api/auth/ask-code?email=${form.email}&type=register`, () => {
+//         ElMessage.success(`验证码已发送到邮箱: ${form.email}，请注意查收`)
+//         const handle = setInterval(() => {
+//           coldTime.value--
+//           if(coldTime.value === 0) {
+//             clearInterval(handle)
+//           }
+//         }, 1000)
+//     }, undefined, (message) => {
+//         ElMessage.warning(message)
+//         coldTime.value = 0
+//     })
+// }
 </script>
 
 <style scoped>
