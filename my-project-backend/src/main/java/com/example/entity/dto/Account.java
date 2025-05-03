@@ -6,9 +6,9 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import com.example.entity.BaseData;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
-import java.util.Date;
 
 /**
  * 数据库中的用户信息
@@ -16,6 +16,7 @@ import java.util.Date;
 @Data
 @TableName("db_account")
 @AllArgsConstructor
+@NoArgsConstructor
 public class Account implements BaseData {
     @TableId(type = IdType.AUTO)
     Integer id;
@@ -25,4 +26,6 @@ public class Account implements BaseData {
     String role;
     String avatar;
     LocalDateTime registerTime;
+    boolean mute;
+    boolean banned;
 }

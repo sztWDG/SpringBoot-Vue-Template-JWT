@@ -38,7 +38,7 @@ function openUserEditor(user) {
     editor.display = true
     editor.loading = true
     apiUserDetailTotal(editor.id, data => {
-        editor.temp = {...data, ...user}
+        editor.temp = {...data, ...user} //user基础信息与data详细信息都在
         editor.loading = false
     })
 }

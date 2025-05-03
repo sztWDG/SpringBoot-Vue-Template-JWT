@@ -12,4 +12,6 @@ public class AccountVO {
     String role;
     String avatar;
     LocalDateTime registerTime;
+    boolean mute;
+    boolean banned;
 }
