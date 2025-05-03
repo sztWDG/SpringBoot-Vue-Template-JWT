@@ -1,12 +1,14 @@
 package com.example.controller;
 
 import com.example.entity.RestBean;
+import com.example.entity.dto.Account;
 import com.example.entity.dto.Interact;
 import com.example.entity.vo.request.AddCommentVO;
 import com.example.entity.vo.request.TopicCreateVO;
 import com.example.entity.vo.request.TopicUpdateVO;
 import com.example.entity.vo.request.WeatherVO;
 import com.example.entity.vo.response.*;
+import com.example.service.AccountService;
 import com.example.service.TopicService;
 import com.example.service.WeatherService;
 import com.example.utils.Const;
@@ -33,6 +35,9 @@ public class ForumController {
     @Resource
     ControllerUtils utils;
 
+    @Resource
+    AccountService accountService;
+
 
     //只需要获取数据，并不需要上传什么
     @GetMapping("/weather")
@@ -55,7 +60,11 @@ public class ForumController {
     @PostMapping("/create-topic")
     public RestBean<Void> createTopic(@Valid @RequestBody TopicCreateVO vo,
                                       @RequestAttribute(Const.ATTR_USER_ID) int id) {
-
+        Account account = accountService.findAccountById(id);
+        //禁言操作
+        if (account.isMute()) {
+            return RestBean.forbidden("您已被禁言，无法创建新的主题");
+        }
         return utils.messageHandle(() -> topicService.createTopic(id, vo));
     }
 
@@ -103,6 +112,11 @@ public class ForumController {
     @PostMapping("/add-comment")
     public RestBean<Void> addComment(@Valid @RequestBody AddCommentVO vo,
                                      @RequestAttribute(Const.ATTR_USER_ID) int id) {
+        Account account = accountService.findAccountById(id);
+        //禁言操作
+        if (account.isMute()) {
+            return RestBean.forbidden("您已被禁言，无法发表新的评论");
+        }
         return utils.messageHandle(() -> topicService.createComment(id, vo));
     }
 
