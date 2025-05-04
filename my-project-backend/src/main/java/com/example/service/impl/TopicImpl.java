@@ -7,8 +7,10 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.example.entity.dto.*;
 import com.example.entity.vo.request.AddCommentVO;
+import com.example.entity.vo.request.AddTopicTypeVO;
 import com.example.entity.vo.request.TopicCreateVO;
 import com.example.entity.vo.request.TopicUpdateVO;
+import com.example.entity.vo.request.UpdateTopicTypeVO;
 import com.example.entity.vo.response.CommentVO;
 import com.example.entity.vo.response.TopicDetailVO;
 import com.example.entity.vo.response.TopicPreviewVO;
@@ -181,7 +183,7 @@ public class TopicImpl extends ServiceImpl<TopicMapper, Topic> implements TopicS
                         .selectOne(Wrappers.<TopicComment>query()
                                 .eq("id", dto.getQuote())
                                 .orderByAsc("time"));
-                //判断如果comment若没查出,需要将quote设为“此评论已被删除”
+                //判断如果comment若没查出,需要将quote设为"此评论已被删除"
                 if (comment != null) {
                     JSONObject object = JSONObject.parseObject(comment.getContent());
                     StringBuilder builder = new StringBuilder();
@@ -424,5 +426,59 @@ public class TopicImpl extends ServiceImpl<TopicMapper, Topic> implements TopicS
             if (length > max) return false;
         }
         return true;
+    }
+
+    // 新增管理帖子类型的方法
+    @Override
+    public String createTopicType(AddTopicTypeVO vo) {
+        TopicType topicType = new TopicType();
+        BeanUtils.copyProperties(vo, topicType);
+        if (mapper.insert(topicType) > 0) {
+            // 重新初始化类型列表
+            this.initTypes();
+            // 清除类型相关缓存
+            cacheUtils.deleteCachePattern(Const.FORUM_TOPIC_PREVIEW_CACHE + "*");
+            return null;
+        } else {
+            return "创建帖子类型失败";
+        }
+    }
+
+    @Override
+    public String updateTopicType(UpdateTopicTypeVO vo) {
+        TopicType topicType = mapper.selectById(vo.getId());
+        if (topicType == null) {
+            return "帖子类型不存在";
+        }
+        
+        BeanUtils.copyProperties(vo, topicType);
+        if (mapper.updateById(topicType) > 0) {
+            // 重新初始化类型列表
+            this.initTypes();
+            // 清除类型相关缓存
+            cacheUtils.deleteCachePattern(Const.FORUM_TOPIC_PREVIEW_CACHE + "*");
+            return null;
+        } else {
+            return "更新帖子类型失败";
+        }
+    }
+
+    @Override
+    public String deleteTopicType(int id) {
+        // 检查是否有帖子使用该类型
+        Long count = baseMapper.selectCount(Wrappers.<Topic>query().eq("type", id));
+        if (count > 0) {
+            return "该帖子类型下存在帖子，无法删除";
+        }
+        
+        if (mapper.deleteById(id) > 0) {
+            // 重新初始化类型列表
+            this.initTypes();
+            // 清除类型相关缓存
+            cacheUtils.deleteCachePattern(Const.FORUM_TOPIC_PREVIEW_CACHE + "*");
+            return null;
+        } else {
+            return "删除帖子类型失败";
+        }
     }
 }

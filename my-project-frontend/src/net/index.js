@@ -78,6 +78,18 @@ function internalGet(url, headers, success, failure, error = defaultError) {
     }).catch(err => error(err))
 }
 
+function internalDelete(url, headers, success, failure, error = defaultError) {
+    axios.delete(url, {headers: headers}).then(({data}) => {
+        if (data.code === 200)
+            success(data.data)
+        else if (data.code === 401) {
+            failure('登录状态已过期，请重新登录！')
+            deleteAccessToken(true)
+        } else
+            failure(data.message, data.code, url)
+    }).catch(err => error(err))
+}
+
 function login(username, password, remember, success, failure = defaultFailure) {
     internalPost('/api/auth/login', {
         username: username,
@@ -93,6 +105,10 @@ function login(username, password, remember, success, failure = defaultFailure) 
 
 function post(url, data, success, failure = defaultFailure) {
     internalPost(url, data, accessHeader(), success, failure)
+}
+
+function del(url, success, failure = defaultFailure) {
+    internalDelete(url, accessHeader(), success, failure)
 }
 
 function logout(success, failure = defaultFailure) {
@@ -115,4 +131,4 @@ function isRoleAdmin() {
     return takeAccessToken()?.role === 'admin'
 }
 
-export {post, get, login, logout, isUnauthorized, accessHeader, isRoleAdmin}
+export {post, get, del, login, logout, isUnauthorized, accessHeader, isRoleAdmin}

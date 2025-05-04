@@ -1,12 +1,21 @@
 <script setup>
 defineProps({
-  color: String
+  color: String,
+  size: {
+    type: [String, Number],
+    default: 10
+  }
 })
 
 </script>
 
 <template>
-  <div class="dot" :style="{background:color}">
+  <div class="dot" :style="{
+    background: color,
+    width: `${size}px`,
+    height: `${size}px`,
+    borderRadius: `${size / 2}px`
+  }">
 
   </div>
 
@@ -14,11 +23,7 @@ defineProps({
 
 <style scoped>
 .dot{
-  width: 10px;
-  height: 10px;
-  border-radius: 5px;
   display: inline-block;
-
 }
 
 </style>

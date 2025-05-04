@@ -5,8 +5,10 @@ import com.example.entity.dto.Interact;
 import com.example.entity.dto.Topic;
 import com.example.entity.dto.TopicType;
 import com.example.entity.vo.request.AddCommentVO;
+import com.example.entity.vo.request.AddTopicTypeVO;
 import com.example.entity.vo.request.TopicCreateVO;
 import com.example.entity.vo.request.TopicUpdateVO;
+import com.example.entity.vo.request.UpdateTopicTypeVO;
 import com.example.entity.vo.response.CommentVO;
 import com.example.entity.vo.response.TopicDetailVO;
 import com.example.entity.vo.response.TopicPreviewVO;
@@ -26,4 +28,9 @@ public interface TopicService extends IService<Topic> {
     String createComment(int uid, AddCommentVO vo);
     List<CommentVO> comments(int tid, int pageNumber);
     void deleteComment(int id, int uid);
+    
+    // 新增管理员管理帖子类型的方法
+    String createTopicType(AddTopicTypeVO vo);
+    String updateTopicType(UpdateTopicTypeVO vo);
+    String deleteTopicType(int id);
 }
