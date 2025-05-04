@@ -18,20 +18,22 @@ const userMenu = [
   {
     title: '校园论坛', icon: Location, sub: [
       { title: '帖子广场', icon: ChatDotSquare, index: '/index' },
-      { title: '失物招领', icon: Bell },
-      { title: '校园活动', icon: Notification },
-      { title: '表白墙', icon: Umbrella },
-      { title: '海文考研', icon: School }
+      // { title: '失物招领', icon: Bell },
+      // { title: '校园活动', icon: Notification },
+      // { title: '表白墙', icon: Umbrella },
+      // { title: '海文考研', icon: School }
     ]
-  }, {
-    title: '探索与发现', icon: Position, sub: [
-      { title: '成绩查询', icon: Document },
-      { title: '班级课程表', icon: Files },
-      { title: '教务通知', icon: Monitor },
-      { title: '在线图书馆', icon: Collection },
-      { title: '预约教室', icon: DataLine }
-    ]
-  }, {
+  },
+  //   {
+  //   title: '探索与发现', icon: Position, sub: [
+  //     { title: '成绩查询', icon: Document },
+  //     { title: '班级课程表', icon: Files },
+  //     { title: '教务通知', icon: Monitor },
+  //     { title: '在线图书馆', icon: Collection },
+  //     { title: '预约教室', icon: DataLine }
+  //   ]
+  // },
+    {
     title: '个人设置', icon: Operation, sub: [
       { title: '个人信息设置', icon: User, index: '/index/user-setting' },
       { title: '账号安全设置', icon: Lock, index: '/index/privacy-setting' }
@@ -94,9 +96,9 @@ function deleteAllNotification() {
             <template #append>
               <el-select style="width: 120px" v-model="searchInput.type">
                 <el-option value="1" label="帖子广场"/>
-                <el-option value="2" label="校园活动"/>
-                <el-option value="3" label="表白墙"/>
-                <el-option value="4" label="教务通知"/>
+<!--                <el-option value="2" label="校园活动"/>-->
+<!--                <el-option value="3" label="表白墙"/>-->
+<!--                <el-option value="4" label="教务通知"/>-->
               </el-select>
             </template>
           </el-input>
