@@ -47,7 +47,8 @@ const loading = inject('userLoading')
 
 const searchInput = reactive({
   type: '1',
-  text: ''
+  text: '',
+  searching: false
 })
 
 const notification = ref([])
@@ -61,6 +62,17 @@ const loadNotification =
     () => apiNotificationList(data => notification.value = data)
 loadNotification()
 
+// Handle search when pressing Enter
+function handleSearch() {
+  searchInput.searching = true
+  // Emit a custom event that components can listen for
+  window.dispatchEvent(new CustomEvent('forum-search', { 
+    detail: { 
+      text: searchInput.text,
+      type: searchInput.type
+    } 
+  }))
+}
 
 // function userLogout() {
 //   logout(() => router.push("/"))
@@ -83,11 +95,12 @@ function deleteAllNotification() {
     <el-container style="height: 100%" v-if="!loading">
       <el-header class="main-content-header">
         <div style="width: 320px; height: 32px">
-          <el-image class="logo" src="https://element-plus.org/images/element-plus-logo.svg" style="margin-right: auto"/>
+          <el-image class="logo" src="https://www.jmu.edu.cn/images/logo.png" style="margin-right: auto"/>
         </div>
 
         <div style="flex: 1;padding: 0 20px;text-align: center ">
-          <el-input style="width: 100%;max-width: 450px" placeholder="搜索论坛相关内容...">
+          <el-input style="width: 100%;max-width: 450px" placeholder="搜索论坛相关内容..." 
+                    v-model="searchInput.text" @keyup.enter="handleSearch">
             <template #prefix>
               <el-icon>
                 <Search/>

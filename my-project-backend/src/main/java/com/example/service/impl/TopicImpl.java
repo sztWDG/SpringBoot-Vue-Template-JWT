@@ -291,7 +291,8 @@ public class TopicImpl extends ServiceImpl<TopicMapper, Topic> implements TopicS
         String type = interact.getType();
         synchronized (type.intern()) {
             //不能直接存，而要存到哈希表里面，因为需要去重，相同的只留下一个数据 //这里的state要用Boolean封装一下
-            RedisTemplate.opsForHash().put(type, interact.toKey(), Boolean.toString(state));
+            RedisTemplate.opsForHash().
+                    put(type, interact.toKey(), Boolean.toString(state));
         }
         //有的话，创建定时任务，否则不管
         this.saveInteractSchedule(type);
@@ -356,7 +357,6 @@ public class TopicImpl extends ServiceImpl<TopicMapper, Topic> implements TopicS
 
             RedisTemplate.delete(type);
         }
-
     }
 
     private <T> T fillUserDetailsByPrivacy(T target, int uid) {
@@ -479,6 +479,44 @@ public class TopicImpl extends ServiceImpl<TopicMapper, Topic> implements TopicS
             return null;
         } else {
             return "删除帖子类型失败";
+        }
+    }
+    
+    @Override
+    public List<TopicPreviewVO> listAllTopics() {
+        List<Topic> topics = baseMapper.selectList(Wrappers.<Topic>query()
+                .orderByDesc("time")
+                .last("LIMIT 100")); // 限制最多返回100条，避免数据过多
+        
+        if (topics.isEmpty()) return null;
+        return topics.stream().map(this::resolveToPreview).toList();
+    }
+    
+    @Override
+    public String setTopicTop(int tid, boolean isTop) {
+        // 先检查帖子是否存在
+        Topic topic = baseMapper.selectById(tid);
+        if (topic == null) {
+            return "帖子不存在";
+        }
+        
+        // 检查当前置顶状态
+        boolean currentTopStatus = topic.getTop() != null && topic.getTop() == 1;
+        
+        // 如果当前状态与目标状态相同，无需更改
+        if (currentTopStatus == isTop) {
+            return isTop ? "该帖子已经是置顶状态" : "该帖子已经不是置顶状态";
+        }
+        
+        // 更新置顶状态
+        if (baseMapper.update(null, Wrappers.<Topic>update()
+                .eq("id", tid)
+                .set("top", isTop ? 1 : 0)) > 0) {
+            // 清除缓存
+            cacheUtils.deleteCachePattern(Const.FORUM_TOPIC_PREVIEW_CACHE + "*");
+            return null;
+        } else {
+            return "更新帖子置顶状态失败";
         }
     }
 }

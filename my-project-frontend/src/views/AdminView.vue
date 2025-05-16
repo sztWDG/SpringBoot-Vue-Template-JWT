@@ -96,7 +96,7 @@ onMounted(() => {
         <el-container style="height: 100%">
             <el-aside width="230px" class="admin-content-aside">
                 <div class="logo-box">
-                    <el-image class="logo" src="https://element-plus.org/images/element-plus-logo.svg"/>
+                    <el-image class="logo" src="https://www.jmu.edu.cn/images/logo.png"/>
                 </div>
                 <el-scrollbar style="height: calc(100vh - 57px)">
                     <el-menu

@@ -71,7 +71,7 @@ onMounted(() => {
       
       <div class="welcome-card">
         <el-image 
-          src="https://element-plus.org/images/element-plus-logo.svg" 
+          src="https://www.jmu.edu.cn/images/logo.png"
           class="logo"
           fit="contain"
         />

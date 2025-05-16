@@ -40,8 +40,13 @@ const topics = reactive({
   type: 0,
   page: 0,
   end: false,
-
+  searchText: '',
+  totalCount: 0,  // Total count of topics for pagination
+  checkingNextPage: false
 })
+
+// Track the current page for pagination
+const currentPage = ref(1)
 
 const collects = ref(false);
 
@@ -49,7 +54,10 @@ const collects = ref(false);
 // const type = ref(0)
 
 //控制点击type之后，进行分类，开始时也是
-watch(() => topics.type, () => resetList(), {immediate: true})
+watch(() => topics.type, () => {
+  topics.searchText = '';
+  resetList();
+}, {immediate: true})
 
 // 计算日期
 const today = computed(() => {
@@ -69,20 +77,68 @@ const today = computed(() => {
 //请求帖子列表封成一个函数
 function updateList() {
   //如果已经到最后，则返回
-  if (topics.end) return;
-  //记得写请求参数
+  if (topics.end && currentPage.value > 1) return;
+  
+  //记得写请求参数 - page从0开始，但后端需要从1开始，所以要+1
   apiForumTopicList(topics.page, topics.type, data => {
-    //如果data=true，则继续加载数据到list，并pege++
+    //如果data有内容
     if (data) {
-      data.forEach(d => topics.list.push(d))
-      topics.page++
-    }
-    //如果data=false，或者data的长度小于十，则直接返回end=true
-    if (!data || data.length < 10) {
-      topics.end = true
+      // Filter topics based on search text if needed
+      let filteredData = data;
+      if (topics.searchText) {
+        const searchLower = topics.searchText.toLowerCase();
+        filteredData = data.filter(topic => 
+          topic.title.toLowerCase().includes(searchLower) || 
+          topic.text.toLowerCase().includes(searchLower)
+        );
+      }
+      topics.list = filteredData;
+      
+      // 根据数据判断总页数
+      if (topics.page === 0) {
+        // 如果是第一页且数据不足10条，说明只有一页
+        if (data.length < 10) {
+          topics.totalCount = data.length;
+          topics.end = true;
+        } else {
+          // 如果第一页数据是10条，请求第二页确认总数
+          if (!topics.checkingNextPage) {
+            topics.checkingNextPage = true;
+            apiForumTopicList(1, topics.type, nextPageData => {
+              topics.checkingNextPage = false;
+              if (nextPageData && nextPageData.length > 0) {
+                // 至少有两页
+                if (nextPageData.length < 10) {
+                  // 如果第二页不足10条，总数为第一页10条加第二页实际条数
+                  topics.totalCount = 10 + nextPageData.length;
+                } else {
+                  // 如果第二页也是10条，保守估计30条（3页）
+                  topics.totalCount = 30;
+                }
+              } else {
+                // 只有一页10条数据
+                topics.totalCount = 10;
+                topics.end = true;
+              }
+            });
+          } else {
+            // 保守估计20条数据作为默认值
+            topics.totalCount = 20;
+          }
+        }
+      } else if (data.length < 10) {
+        // 如果不是第一页且数据不足10条，说明到达最后一页
+        topics.end = true;
+        topics.totalCount = topics.page * 10 + data.length;
+      }
+    } else {
+      topics.end = true;
+      topics.list = [];
+      if (topics.page === 0) {
+        topics.totalCount = 0;
+      }
     }
   })
-
 }
 
 //在一开始的时候调用一次，发帖成功后也调用一次
@@ -94,13 +150,18 @@ function onTopicCreate() {
 }
 
 //重置List请求
-function resetList() {
-  topics.page = 0;
+function resetList(page = 1) {
+  currentPage.value = page;
+  topics.page = page - 1; // Backend expects page numbers starting from 1, but we store 0-based index
   topics.end = false;
   topics.list = [];
-  updateList()
+  updateList();
 }
 
+// Handle page change
+function handlePageChange(page) {
+  resetList(page);
+}
 
 //前端请求获取位置信息
 navigator.geolocation.getCurrentPosition(position => {
@@ -126,7 +187,14 @@ navigator.geolocation.getCurrentPosition(position => {
   enableHighAccuracy: true
 })
 
+// Listen for search events from IndexView
 onMounted(() => {
+  // Listen for search events
+  window.addEventListener('forum-search', (event) => {
+    topics.searchText = event.detail.text;
+    resetList();
+  });
+  
   //获取置顶帖子信息
   apiForumTopTopics(data => topics.top = data)
 })
@@ -226,6 +294,14 @@ onMounted(() => {
           </div>
         </div>
       </transition>
+
+      <!-- Add pagination at the bottom of the topic list -->
+      <div style="width: fit-content;margin: 20px auto" v-if="topics.list.length">
+        <el-pagination background layout="prev, pager, next"
+                       :current-page="currentPage" @current-change="handlePageChange"
+                       :total="topics.totalCount" :page-size="10"
+                       hide-on-single-page/>
+      </div>
 
     </div>
     <!--右侧 -->

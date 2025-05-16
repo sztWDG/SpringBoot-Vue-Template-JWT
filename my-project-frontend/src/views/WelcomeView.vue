@@ -2,10 +2,10 @@
     <div style="width: 100vw;height: 100vh;overflow: hidden;display: flex">
         <div style="flex: 1">
             <el-image style="width: 100%;height: 100%" fit="cover"
-                      src="https://img1.baidu.com/it/u=4097856652,4033702227&fm=253&fmt=auto&app=120&f=JPEG?w=1422&h=800"/>
+                      src="https://img.pconline.com.cn/images/upload/upc/tx/photoblog/1911/26/c4/181365848_1574744813062.jpg"/>
         </div>
         <div class="welcome-title">
-            <div style="font-size: 30px;font-weight: bold">欢迎来到我们的校园论坛</div>
+            <div style="font-size: 30px;font-weight: bold">欢迎来到集美大学校园论坛(五社区分坛)</div>
             <div style="margin-top: 10px">在这里你可以畅所欲言（合法的）</div>
             <div style="margin-top: 5px">在这里你可以交友、碰撞思维的火花</div>
         </div>

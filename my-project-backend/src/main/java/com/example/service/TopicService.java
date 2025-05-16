@@ -33,4 +33,8 @@ public interface TopicService extends IService<Topic> {
     String createTopicType(AddTopicTypeVO vo);
     String updateTopicType(UpdateTopicTypeVO vo);
     String deleteTopicType(int id);
+    
+    // 新增管理员管理置顶帖子的方法
+    List<TopicPreviewVO> listAllTopics();
+    String setTopicTop(int tid, boolean isTop);
 }

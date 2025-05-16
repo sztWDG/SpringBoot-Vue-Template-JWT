@@ -3,11 +3,15 @@ import {
   apiAdminForumTypes,
   apiAdminAddForumType,
   apiAdminUpdateForumType,
-  apiAdminDeleteForumType
+  apiAdminDeleteForumType,
+  apiAdminTopics,
+  apiAdminTopTopics,
+  apiAdminSetTopicTop,
+  apiAdminCancelTopicTop
 } from "@/net/api/admin";
 import { ref, onMounted } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
-import { Plus, Edit, Delete } from '@element-plus/icons-vue';
+import { Plus, Edit, Delete, Top, Bottom } from '@element-plus/icons-vue';
 import ColorDot from '@/components/ColorDot.vue';
 
 // 表单引用
@@ -15,7 +19,13 @@ const formRef = ref(null);
 
 // 帖子类型数据
 const types = ref([]);
-const loading = ref(false);
+const typesLoading = ref(false);
+
+// 帖子数据
+const topics = ref([]);
+const topTopics = ref([]);
+const topicsLoading = ref(false);
+const topicSearchText = ref('');
 
 // 弹窗相关
 const typeDialog = ref(false);
@@ -55,10 +65,27 @@ const colorOptions = [
 
 // 获取帖子类型列表
 const loadTypes = () => {
-  loading.value = true;
+  typesLoading.value = true;
   apiAdminForumTypes(data => {
     types.value = data;
-    loading.value = false;
+    typesLoading.value = false;
+  });
+};
+
+// 获取帖子列表和置顶帖子
+const loadTopics = () => {
+  topicsLoading.value = true;
+  apiAdminTopics(data => {
+    if (data) {
+      topics.value = data;
+    } else {
+      topics.value = [];
+    }
+  });
+  
+  apiAdminTopTopics(data => {
+    topTopics.value = data || [];
+    topicsLoading.value = false;
   });
 };
 
@@ -110,6 +137,35 @@ const handleDelete = (row) => {
   });
 };
 
+// 设置帖子置顶
+const setTopicTop = (topic) => {
+  apiAdminSetTopicTop(topic.id, message => {
+    if (!message) {
+      ElMessage.success('设置置顶成功');
+      loadTopics();
+    } else {
+      ElMessage.error(message);
+    }
+  });
+};
+
+// 取消帖子置顶
+const cancelTopicTop = (topic) => {
+  apiAdminCancelTopicTop(topic.id, message => {
+    if (!message) {
+      ElMessage.success('取消置顶成功');
+      loadTopics();
+    } else {
+      ElMessage.error(message);
+    }
+  });
+};
+
+// 检查帖子是否置顶
+const isTopicTop = (topicId) => {
+  return topTopics.value.some(topic => topic.id === topicId);
+};
+
 // 提交表单
 const submitForm = (formEl) => {
   if (!formEl) return;
@@ -149,14 +205,22 @@ const resetForm = (formEl) => {
   typeDialog.value = false;
 };
 
+// 格式化日期时间
+const formatDateTime = (dateStr) => {
+  const date = new Date(dateStr);
+  return date.toLocaleString();
+};
+
 // 组件挂载时加载数据
 onMounted(() => {
   loadTypes();
+  loadTopics();
 });
 </script>
 
 <template>
   <div class="forum-admin-container">
+    <!-- 帖子类型管理 -->
     <el-card class="types-card">
       <template #header>
         <div class="card-header">
@@ -165,7 +229,7 @@ onMounted(() => {
         </div>
       </template>
       
-      <el-table :data="types" style="width: 100%" v-loading="loading" border stripe>
+      <el-table :data="types" style="width: 100%" v-loading="typesLoading" border stripe>
         <el-table-column prop="id" label="ID" width="80" />
         <el-table-column prop="name" label="类型名称" width="120" />
         <el-table-column prop="description" label="描述" />
@@ -196,6 +260,92 @@ onMounted(() => {
           </template>
         </el-table-column>
       </el-table>
+    </el-card>
+    
+    <!-- 置顶帖子管理 -->
+    <el-card class="topics-card" style="margin-top: 20px;">
+      <template #header>
+        <div class="card-header">
+          <span>置顶帖子管理</span>
+          <el-button type="primary" @click="loadTopics">刷新数据</el-button>
+        </div>
+      </template>
+      
+      <div class="top-topics-section" v-loading="topicsLoading">
+        <h3>当前置顶帖子</h3>
+        <el-table :data="topTopics" style="width: 100%" border stripe>
+          <el-table-column prop="id" label="ID" width="80" />
+          <el-table-column prop="title" label="标题" />
+          <el-table-column label="发布时间" width="180">
+            <template #default="{ row }">
+              {{ formatDateTime(row.time) }}
+            </template>
+          </el-table-column>
+          <el-table-column label="操作" width="120" align="center">
+            <template #default="{ row }">
+              <el-button 
+                type="danger" 
+                :icon="Bottom" 
+                circle 
+                plain 
+                title="取消置顶"
+                @click="cancelTopicTop(row)"
+              />
+            </template>
+          </el-table-column>
+        </el-table>
+        
+        <h3 style="margin-top: 20px;">帖子列表</h3>
+        <el-input
+          v-model="topicSearchText"
+          placeholder="搜索帖子标题..."
+          style="margin-bottom: 15px;"
+        />
+        <el-table 
+          :data="topics.filter(data => !topicSearchText || data.title.toLowerCase().includes(topicSearchText.toLowerCase()))" 
+          style="width: 100%" 
+          border 
+          stripe
+        >
+          <el-table-column prop="id" label="ID" width="80" />
+          <el-table-column prop="title" label="标题" />
+          <el-table-column label="类型" width="120">
+            <template #default="{ row }">
+              <div class="color-preview" v-if="row.type">
+                <color-dot :color="row.type.color" size="20" />
+                <span class="color-name">{{ row.type.name }}</span>
+              </div>
+            </template>
+          </el-table-column>
+          <el-table-column label="发布时间" width="180">
+            <template #default="{ row }">
+              {{ formatDateTime(row.time) }}
+            </template>
+          </el-table-column>
+          <el-table-column label="操作" width="120" align="center">
+            <template #default="{ row }">
+              <el-button 
+                v-if="!isTopicTop(row.id)"
+                type="primary" 
+                :icon="Top" 
+                circle 
+                plain 
+                title="置顶帖子"
+                @click="setTopicTop(row)"
+              />
+              <el-button
+                v-else
+                type="info" 
+                :icon="Top" 
+                circle 
+                plain 
+                title="已置顶"
+                disabled
+              />
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
     </el-card>
     
     <!-- 添加/编辑帖子类型弹窗 -->
@@ -274,8 +424,15 @@ onMounted(() => {
   font-weight: bold;
 }
 
-.types-card {
+.types-card, .topics-card {
   margin-bottom: 20px;
+}
+
+.top-topics-section h3 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  font-size: 16px;
+  color: #606266;
 }
 
 .color-preview {
